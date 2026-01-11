@@ -15,9 +15,20 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
+from rest_framework import viewsets, routers
+from myapp import serializers
+from myapp.views import AccountViewSet, SongViewSet, LibraryViewSet
+from myapp.models import User, Song, Library
 
-#. add api paths 
+
+# Routers provide an easy way of automatically determining the URL conf.
+router = routers.DefaultRouter()
+router.register(r'account', AccountViewSet, basename='account')
+router.register(r'song', SongViewSet, basename='song')
+router.register(r'library', LibraryViewSet, basename='library')
+
+#. add api paths music is auth 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('', include(router.urls))
 ]

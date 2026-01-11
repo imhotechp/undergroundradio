@@ -9,9 +9,10 @@ https://docs.djangoproject.com/en/5.2/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
-
+from os import getenv
+from dotenv import load_dotenv
 from pathlib import Path
-
+load_dotenv()  # loads .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -29,7 +30,7 @@ ALLOWED_HOSTS = []
 
 
 # Application definition
-
+# ug_radio_django is the path where models.py which contains models
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -37,8 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'ug_radio_django'
-]
+    'myapp.apps.MyappConfig',
+    'rest_framework',
+    'django_extensions'
+] 
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -49,6 +52,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+REST_FRAMEWORK = {
+    # Use Django's standard `django.contrib.auth` permissions,
+    # or allow read-only access for unauthenticated users.
+    'DEFAULT_PERMISSION_CLASSES': [
+        'rest_framework.permissions.DjangoModelPermissionsOrAnonReadOnly'
+    ]
+}
+
 
 ROOT_URLCONF = 'ug_radio_django.urls'
 
@@ -70,16 +82,22 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ug_radio_django.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.2/ref/settings/#databases
-
+# Database - Neon postgres
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': getenv('NEON_DB'),
+        'USER': getenv('NEON_USER'),
+        'PASSWORD': getenv('NEON_PASS'),
+        'HOST': getenv('NEON_HOST'),
+        'PORT': getenv('NEON_PORT', 5432),
+        'OPTIONS': {
+            'sslmode': 'require',
+        },
     }
 }
 
+AUTH_USER_MODEL = "myapp.User"
 
 # Password validation
 # https://docs.djangoproject.com/en/5.2/ref/settings/#auth-password-validators
