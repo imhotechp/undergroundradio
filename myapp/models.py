@@ -1,5 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.conf import settings
 
 class Song(models.Model):
     song_name = models.CharField()
@@ -15,5 +16,5 @@ class User(AbstractUser):
 
 #. Multiple users can have multiple libraries (like playlists)
 class Library(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
     song = models.ManyToManyField(Song)

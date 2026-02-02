@@ -1,34 +1,70 @@
 # serializers.py
 from rest_framework import serializers
 from myapp.models import User, Song, Library
-from datetime import datetime
-from myapp.mp3juugdb import find
-
+import re
+from django.contrib.auth import authenticate
+# MUST INCLUDE EVERY FIELD HERE IN EVERY REQUEST
 class AccountSerializer(serializers.ModelSerializer):
+    username = serializers.CharField(min_length=3, max_length=20)
+    password = serializers.CharField(
+        min_length=8,
+        write_only=True
+    )
+    email = serializers.EmailField()
+    phone_number = serializers.CharField()
+    date_created = serializers.DateTimeField(read_only=True)
+
     class Meta:
         model = User
-        username = serializers.CharField(required=True, min_length=1, max_length=20)
-        password = serializers.CharField(required=True, min_length=1, max_length=20)
-        email = serializers.EmailField(required=True)
-        phone_number = serializers.IntegerField()
-        date_created = serializers.DateTimeField(default=datetime.now())
-    #. need to get the token from mp3juug and compare it to firstly mongoDB /music/juug2radio/
-    def juug_to_ug(request, validated_data):
-        
-        token = request.query_params['token']
-        if token:
-            try:
-                search = find(token)
-                if search:
-                    pass
+        fields = (
+            'username',
+            'password',
+            'email',
+            'phone_number',
+            'date_created',
+        )
 
-            except:
-                pass
-
+    #. validates input
+    def validate(self, data):
+        data['username'] = data['username'].strip().lower()
+        data['password'] = data['password'].strip()
+        data['email'] = data['email'].strip().lower()
+        data['phone_number'] = data['phone_number'].strip()
+        #. check if username length is greater than 20 or less than 3
+        if len(data['username']) < 3 or len(data['username']) > 20:
+            raise serializers.ValidationError('Username must be between 3 characters long')
+        if not re.match(r"^\w+$", data['username']):
+            raise serializers.ValidationError(
+                'Invalid characters used in username. ' \
+                'Only letters, numbers, and underscores ' \
+                'are allowed')
+        #. check if password at least 8 characters + a certain format
+        if len(data['password']) < 8:
+            raise serializers.ValidationError('Password must be at least 8 characters long')
+        if not re.match(r"^[a-zA-Z0-9_!@#$]+$", data['password']):
+            raise serializers.ValidationError(
+                'Invalid characters used in password. ' \
+                'Only letters, numbers, and these ' \
+                'special characters "_!@#$" are allowed')
+        #. check if email is certain format
+        if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]+$", data['email']):
+            raise serializers.ValidationError('Invalid characters used in email.')
+        #. check if phone number certain format 
+        if not re.match(r"^\d{10,10}$", data['phone_number']):
+            raise serializers.ValidationError('Invalid US phone number.')
+        return data
+    # create user 
     def create(self, validated_data):
-        pass
-
-
+        password = validated_data.pop('password')
+        user = User.objects.create_user(password=password, **validated_data)
+        return user
+    
+class LoginSerializer(serializers.Serializer):
+    username = serializers.CharField(min_length=3, max_length=20)
+    password = serializers.CharField(
+        min_length=8,
+        write_only=True
+    )
 
 class SongSerializer(serializers.ModelSerializer):
     class Meta:
