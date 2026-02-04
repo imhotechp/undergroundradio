@@ -35,7 +35,10 @@ SECRET_KEY = 'django-insecure--00vaxs5nwhlgov1x09&-z7=c6e3h@2l6oit(*unsxix5=o+4-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    '72.61.75.183',
+    'undergroundradio.us'
+]
 
 
 # Application definition
