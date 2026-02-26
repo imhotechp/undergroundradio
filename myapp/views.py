@@ -6,34 +6,52 @@ from rest_framework.permissions import AllowAny
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from myapp.jwt import test_decode
+import requests
 # Creates user account
 class AccountView(APIView):
     permission_classes = [AllowAny]
 # create user + add song to library
-# https://undergroundradio.us/music/?token=xxxx
+# https://undergroundradio.us/music?token=xxxx
     def post(self, request):
         try:
                 request.data["date_created"] = timezone.now().isoformat()
-                #  token = request.query_params('token')
+                token = request.query_params('token')
                 # GET UG RADIO ACC SIGN UP CREDENTIALS
                 serializer = AccountSerializer(data=request.data)
                 if serializer.is_valid():
                     serializer.save()
-                    try:
-                        #. search = find(token)
-                        return Response(request.data)
-                    except:
-                        Response({"msg": "token invalid"})
-                        
-                return Response(serializer.errors)
-        except: 
-            raise exceptions.ParseError(detail="User credentials didn't parse correctly")
+                    # Login user
+                    user = authenticate(
+                    request=request,
+                    username=request.data.get('username'),
+                    password=request.data.get('password')
+                )
+                if not user:
+                    raise exceptions.APIException({'error': 'Invalid credentials'})
+                if not user.is_active:
+                    raise exceptions.APIException({'error': 'User is inactive'})
+                # create token for logged in user 
+                jwt = RefreshToken.for_user(user)
+                refresh_token = str(jwt) # signed tokens
+                access_token = str(jwt.access_token) # signed tokens
+                if not token:
+                    raise exceptions.APIException({'error': 'No token'})
+                return Response(
+                    {
+                        "access": access_token,
+                        "refresh": refresh_token
+                        }
+                    )
+                # create RSA Key pair (private and public)
+                # give public key to MP3JUUG
+                # sign jwts with private key
+        except:
+            raise exceptions.APIException({'error': "login credentials not valid"})
        
     def account(request):
         return Response('fuc5')
 
-# Login + create jwt to pass to juug for exchange for resource
+# Login + create jwt 
 class LoginView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):   
@@ -42,6 +60,7 @@ class LoginView(APIView):
             serializer = LoginSerializer(data=request.data)
             username = request.data.get("username")
             password = request.data.get("password")
+            token = request.query_params.get('token') # get this from URL query
             if serializer.is_valid():
                 user = authenticate(
                     request=request,
@@ -53,14 +72,15 @@ class LoginView(APIView):
                 if not user.is_active:
                     raise exceptions.APIException({'error': 'User is inactive'})
                 jwt = RefreshToken.for_user(user)
-                refresh_token = str(jwt)
-                access_token = str(jwt.access_token)
-                test1 = test_decode(refresh_token)
-                test2 = test_decode(access_token)
+                refresh_token = str(jwt) # signed tokens
+                access_token = str(jwt.access_token) # signed tokens
+                if not token:
+                    raise exceptions.APIException({'error': 'No token'})
+                r = requests.get('https://mp3juug.com/token')
                 return Response(
                     {
-                        "access": test1,
-                        "refresh": test2
+                        "access": access_token,
+                        "refresh": refresh_token
                         }
                     )
                 # create RSA Key pair (private and public)
