@@ -36,6 +36,7 @@ SECRET_KEY = 'django-insecure--00vaxs5nwhlgov1x09&-z7=c6e3h@2l6oit(*unsxix5=o+4-
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    '127.0.0.1',
     '72.61.75.183',
     'undergroundradio.us'
 ]
