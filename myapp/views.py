@@ -21,15 +21,17 @@ class AccountView(APIView):
                 #token = request.query_params('token')
                 # GET UG RADIO ACC SIGN UP CREDENTIALS
                 serializer = AccountSerializer(data=request.data)
-                return Response(request.data)
                 if serializer.is_valid():
                     serializer.save()
+                    return Response(request.data)
+
                     # Login user
                     user = authenticate(
                     request=request,
                     username=request.data.get('username'),
                     password=request.data.get('password')
                 )
+                return
                 if not user:
                     raise exceptions.APIException({'error': 'Invalid credentials'})
                 if not user.is_active:
