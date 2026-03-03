@@ -37,8 +37,8 @@ class AccountView(APIView):
                 jwt = RefreshToken.for_user(user)
                 refresh_token = str(jwt) # signed tokens
                 access_token = str(jwt.access_token) # signed tokens
-                if not token:
-                    raise exceptions.APIException({'error': 'No token'})
+                # if not token:
+                #     raise exceptions.APIException({'error': 'No token'})
                 return Response(
                     {
                         "access": access_token,
