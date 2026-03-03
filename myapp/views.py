@@ -17,6 +17,7 @@ class AccountView(APIView):
 # https://undergroundradio.us/music?token=xxxx
     def post(self, request):
         try:
+                return request.data
                 # request.data["date_created"] = timezone.now().isoformat()
                 token = request.query_params('token')
                 # GET UG RADIO ACC SIGN UP CREDENTIALS
