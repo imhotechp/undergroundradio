@@ -2,7 +2,6 @@
 from rest_framework import serializers
 from myapp.models import User, Song, Library
 import re
-from django.contrib.auth import authenticate
 # MUST INCLUDE EVERY FIELD HERE IN EVERY REQUEST
 class AccountSerializer(serializers.ModelSerializer):
     username = serializers.CharField(min_length=3, max_length=20)
