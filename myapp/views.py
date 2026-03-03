@@ -21,30 +21,30 @@ class AccountView(APIView):
                 #token = request.query_params('token')
                 # GET UG RADIO ACC SIGN UP CREDENTIALS
                 serializer = AccountSerializer(data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    # Login user
-                    user = authenticate(
-                    request=request,
-                    username=request.data.get('username'),
-                    password=request.data.get('password')
-                )
-                if not user:
-                    raise exceptions.APIException({'error': 'Invalid credentials'})
-                if not user.is_active:
-                    raise exceptions.APIException({'error': 'User is inactive'})
-                # create token for logged in user 
-                jwt = RefreshToken.for_user(user)
-                refresh_token = str(jwt) # signed tokens
-                access_token = str(jwt.access_token) # signed tokens
-                # if not token:
-                #     raise exceptions.APIException({'error': 'No token'})
-                return Response(
-                    {
-                        "access": access_token,
-                        "refresh": refresh_token
-                        }
-                    )
+                # if serializer.is_valid():
+                #     serializer.save()
+                #     # Login user
+                #     user = authenticate(
+                #     request=request,
+                #     username=request.data.get('username'),
+                #     password=request.data.get('password')
+                # )
+                # if not user:
+                #     raise exceptions.APIException({'error': 'Invalid credentials'})
+                # if not user.is_active:
+                #     raise exceptions.APIException({'error': 'User is inactive'})
+                # # create token for logged in user 
+                # jwt = RefreshToken.for_user(user)
+                # refresh_token = str(jwt) # signed tokens
+                # access_token = str(jwt.access_token) # signed tokens
+                # # if not token:
+                # #     raise exceptions.APIException({'error': 'No token'})
+                # return Response(
+                #     {
+                #         "access": access_token,
+                #         "refresh": refresh_token
+                #         }
+                #     )
                 # create RSA Key pair (private and public)
                 # give public key to MP3JUUG
                 # sign jwts with private key
