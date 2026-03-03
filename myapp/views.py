@@ -9,7 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
-        return Response({home: 'shit otw holmes'})
+        return Response({'home': 'shit otw holmes'})
 # Creates user account
 class AccountView(APIView):
     permission_classes = [AllowAny]
