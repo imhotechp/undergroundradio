@@ -41,7 +41,7 @@ ALLOWED_HOSTS = [
     'undergroundradio.us'
 ]
 
-
+APPEND_SLASH = False
 # Application definition
 # ug_radio_django is the path where models.py which contains models
 INSTALLED_APPS = [
