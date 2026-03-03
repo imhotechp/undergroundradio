@@ -6,7 +6,6 @@ from rest_framework.permissions import AllowAny
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-import requests
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
