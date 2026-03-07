@@ -34,14 +34,17 @@ class AccountView(APIView):
             password=request.data.get('password')
         )
             if not user:
-                raise exceptions.APIException({'error': 'Invalid credentials'})
-            if not user.is_active:
-                raise exceptions.APIException({'error': 'User is inactive'})
-            # create token for logged in user 
-            jwt = RefreshToken.for_user(user)
-            refresh_token = str(jwt) # signed tokens
-            access_token = str(jwt.access_token) # signed tokens
-            return Response({'refresh': test_decode(refresh_token), 'access': test_decode(access_token)})
+                return Response(serializer.errors, status=400)
+            return Response({"getting": "somewhere"})
+            # if not user:
+            #     raise exceptions.APIException({'error': 'Invalid credentials'})
+            # if not user.is_active:
+            #     raise exceptions.APIException({'error': 'User is inactive'})
+            # # create token for logged in user 
+            # jwt = RefreshToken.for_user(user)
+            # refresh_token = str(jwt) # signed tokens
+            # access_token = str(jwt.access_token) # signed tokens
+            #return Response({'refresh': test_decode(refresh_token), 'access': test_decode(access_token)})
         return Response(serializer.errors, status=400)
         # Login user
    
