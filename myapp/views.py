@@ -22,8 +22,6 @@ class AccountView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        request.data["date_created"] = timezone.now().isoformat()
-
         serializer = AccountSerializer(data=request.data)
 
         if serializer.is_valid():
