@@ -11,48 +11,47 @@ class HomeView(APIView):
     def get(self, request):
         return Response({'home': 'shit otw holmes'})
 # Creates user account
-class AccountView(APIView):
-    permission_classes = [AllowAny]
 # create user + add song to library
 # https://undergroundradio.us/music?token=xxxx
-    def post(self, request):
-        try:
-                request.data["date_created"] = timezone.now().isoformat()
-                #token = request.query_params('token')
-                # GET UG RADIO ACC SIGN UP CREDENTIALS
-                serializer = AccountSerializer(data=request.data)
-                if serializer.is_valid():
-                    serializer.save()
-                    return Response(request.data)
+class AccountView(APIView):
+    permission_classes = [AllowAny]
 
-                    # Login user
-                    user = authenticate(
-                    request=request,
-                    username=request.data.get('username'),
-                    password=request.data.get('password')
-                )
-                return
-                if not user:
-                    raise exceptions.APIException({'error': 'Invalid credentials'})
-                if not user.is_active:
-                    raise exceptions.APIException({'error': 'User is inactive'})
-                # create token for logged in user 
-                jwt = RefreshToken.for_user(user)
-                refresh_token = str(jwt) # signed tokens
-                access_token = str(jwt.access_token) # signed tokens
-                # if not token:
-                #     raise exceptions.APIException({'error': 'No token'})
-                return Response(
-                    {
-                        "access": access_token,
-                        "refresh": refresh_token
-                        }
-                    )
-                # create RSA Key pair (private and public)
-                # give public key to MP3JUUG
-                # sign jwts with private key
-        except:
-            raise exceptions.APIException({'error': "login credentials not valid"})
+    def post(self, request):
+        request.data["date_created"] = timezone.now().isoformat()
+
+        serializer = AccountSerializer(data=request.data)
+
+        if serializer.is_valid():
+            user = serializer.save()
+            return Response(serializer.data, status=201)
+
+        return Response(serializer.errors, status=400)
+        # Login user
+        user = authenticate(
+        request=request,
+        username=request.data.get('username'),
+        password=request.data.get('password')
+        )
+        return
+        if not user:
+            raise exceptions.APIException({'error': 'Invalid credentials'})
+        if not user.is_active:
+            raise exceptions.APIException({'error': 'User is inactive'})
+        # create token for logged in user 
+        jwt = RefreshToken.for_user(user)
+        refresh_token = str(jwt) # signed tokens
+        access_token = str(jwt.access_token) # signed tokens
+        # if not token:
+        #     raise exceptions.APIException({'error': 'No token'})
+        return Response(
+            {
+                "access": access_token,
+                "refresh": refresh_token
+                }
+            )
+        # create RSA Key pair (private and public)
+        # give public key to MP3JUUG
+        # sign jwts with private key
        
     def account(request):
         return Response('fuc5')
