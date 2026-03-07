@@ -11,7 +11,6 @@ class AccountSerializer(serializers.ModelSerializer):
     )
     email = serializers.EmailField()
     phone_number = serializers.CharField()
-    date_created = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = User
@@ -20,7 +19,6 @@ class AccountSerializer(serializers.ModelSerializer):
             'password',
             'email',
             'phone_number',
-            'date_created',
         )
 
     #. validates input

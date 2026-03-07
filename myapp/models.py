@@ -13,7 +13,6 @@ class Song(models.Model):
     nft_status = models.BooleanField()
 class User(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
-    date_created = models.DateTimeField(auto_now_add=True)
 
 #. Multiple users can have multiple libraries (like playlists)
 class Library(models.Model):
