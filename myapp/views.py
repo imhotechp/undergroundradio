@@ -8,6 +8,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from myapp.jwt import test_decode
 from requests import request
+from jwt import jwt
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -41,13 +42,12 @@ class AccountView(APIView):
             jwt = RefreshToken.for_user(user)
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
-            #SIGN JWT FOR HEADER
             # retreive and return resource here
             payload = {'token': token}
             headers= {"Authorization": "Bearer " + access_token}
+            # GET STREAMING OBJECT ADD TO LIBRARY
             # r = requests.get('https://mp3juug.com/music', headers=headers, params=payload)
-            return Response({'refresh': test_decode(refresh_token), 'access': test_decode(access_token),
-                             "payload": payload, "headers": headers})
+            return Response({"payload": payload, "headers": headers})
         return Response(serializer.errors, status=400)
     
 
