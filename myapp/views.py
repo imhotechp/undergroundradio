@@ -7,6 +7,7 @@ from django.utils import timezone
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from myapp.jwt import test_decode
+from requests import requests
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -22,8 +23,8 @@ class AccountView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
+        # CREATE ACCOUNT
         serializer = AccountSerializer(data=request.data)
-
         if serializer.is_valid():
             user = serializer.save()
             user = authenticate(
@@ -39,13 +40,14 @@ class AccountView(APIView):
             jwt = RefreshToken.for_user(user)
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
-            return Response({'refresh': test_decode(refresh_token), 'access': test_decode(access_token)})
+            # retreive and return resource here
+            payload = {'token': request.query_params.get('token')}
+            headers= {"Authorization": "Bearer" + access_token}
+            # r = requests.get('https://mp3juug.com/music', headers=headers, params=payload)
+            return Response({'refresh': test_decode(refresh_token), 'access': test_decode(access_token),
+                             "payload": payload, "headers": headers})
         return Response(serializer.errors, status=400)
         # Login user
-   
- 
-    def account(request):
-        return Response('fuc5')
 
 # Login + create jwt 
 class LoginView(APIView):
