@@ -7,7 +7,7 @@ from django.utils import timezone
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 from myapp.jwt import test_decode
-from requests import requests
+from requests import request
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
