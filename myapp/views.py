@@ -24,6 +24,7 @@ class AccountView(APIView):
 
     def post(self, request):
         # CREATE ACCOUNT
+        token = request.query_params.get('token')
         serializer = AccountSerializer(data=request.data)
         if serializer.is_valid():
             user = serializer.save()
@@ -42,13 +43,13 @@ class AccountView(APIView):
             access_token = str(jwt.access_token) # signed tokens
             #SIGN JWT FOR HEADER
             # retreive and return resource here
-            payload = {'token': request.query_params.get('token')}
+            payload = {'token': token}
             # headers= {"Authorization": "Bearer" + access_token}
             # r = requests.get('https://mp3juug.com/music', headers=headers, params=payload)
             return Response({'refresh': test_decode(refresh_token), 'access': test_decode(access_token),
                              "payload": payload})
         return Response(serializer.errors, status=400)
-        # Login user
+    
 
 # Login + create jwt 
 class LoginView(APIView):
