@@ -44,7 +44,7 @@ class AccountView(APIView):
             #SIGN JWT FOR HEADER
             # retreive and return resource here
             payload = {'token': token}
-            headers= {"Authorization": "Bearer" + access_token}
+            headers= {"Authorization": "Bearer " + access_token}
             # r = requests.get('https://mp3juug.com/music', headers=headers, params=payload)
             return Response({'refresh': test_decode(refresh_token), 'access': test_decode(access_token),
                              "payload": payload, "headers": headers})
