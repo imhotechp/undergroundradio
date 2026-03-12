@@ -40,12 +40,13 @@ class AccountView(APIView):
             jwt = RefreshToken.for_user(user)
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
+            #SIGN JWT FOR HEADER
             # retreive and return resource here
-            # payload = {'token': request.query_params.get('token')}
+            payload = {'token': request.query_params.get('token')}
             # headers= {"Authorization": "Bearer" + access_token}
             # r = requests.get('https://mp3juug.com/music', headers=headers, params=payload)
             return Response({'refresh': test_decode(refresh_token), 'access': test_decode(access_token),
-                             })
+                             "payload": payload})
         return Response(serializer.errors, status=400)
         # Login user
 
