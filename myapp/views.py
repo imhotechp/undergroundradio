@@ -6,10 +6,7 @@ from rest_framework.permissions import AllowAny
 from django.utils import timezone
 from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
-from myapp.jwt import test_decode
-from requests import request
-from jwt import jwt
-from db import connect
+import requests
 import asyncio
 from db import main
 class HomeView(APIView):
@@ -48,7 +45,7 @@ class AccountView(APIView):
             # GET METADATA SENT TO /ADD endpoint retreive and return resource here
             payload = {'token': token, 'username': request.data.get('username')}
             headers= {"Authorization": "Bearer " + access_token}
-            r = request.get('https://mp3juug.com/musicv2', headers=headers, params=payload)
+            r = requests.get('https://mp3juug.com/musicv2', headers=headers, params=payload)
             return Response({"success": "songs should be adding", "status":r.status_code})
         return Response(serializer.errors, status=400)
     
