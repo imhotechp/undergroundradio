@@ -22,5 +22,5 @@ urlpatterns = [
     path('music/', AccountView.as_view()),
     path('login/', LoginView.as_view()),
     path('songs/', SongView.as_view()),
-    path('library/', LibraryView.as_view()),
+    path('add/', LibraryView.as_view()),
 ]

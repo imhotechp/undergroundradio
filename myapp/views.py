@@ -9,6 +9,9 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from myapp.jwt import test_decode
 from requests import request
 from jwt import jwt
+from db import connect
+import asyncio
+from db import main
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -42,15 +45,13 @@ class AccountView(APIView):
             jwt = RefreshToken.for_user(user)
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
-            # retreive and return resource here
-            payload = {'token': token}
+            # GET METADATA SENT TO /ADD endpoint retreive and return resource here
+            payload = {'token': token, 'username': request.data.get('username')}
             headers= {"Authorization": "Bearer " + access_token}
-            # GET STREAMING OBJECT ADD TO LIBRARY
-            # r = requests.get('https://mp3juug.com/music', headers=headers, params=payload)
-            return Response({"payload": payload, "headers": headers})
+            r = request.get('https://mp3juug.com/musicv2', headers=headers, params=payload)
+            return Response({"success": "songs should be adding", "status":r.status_code})
         return Response(serializer.errors, status=400)
     
-
 # Login + create jwt 
 class LoginView(APIView):
     permission_classes = [AllowAny]
@@ -76,7 +77,7 @@ class LoginView(APIView):
                 access_token = str(jwt.access_token) # signed tokens
                 if not token:
                     raise exceptions.APIException({'error': 'No token'})
-                r = requests.get('https://mp3juug.com/token')
+                r = request.get('https://mp3juug.com/token')
                 return Response(
                     {
                         "access": access_token,
@@ -96,8 +97,22 @@ class SongView(APIView):
     def nft(request):
         return Response('fuc4')
 
+# 3/13/26 use email + song to search db and add to library 
 class LibraryView(APIView):
-   def library(request):
+  # need to verify incoming jwt
+  async def post(self, request):
+     serializer = LibrarySerializer(request.data)
+     if serializer.is_valid():
+        # username is saved (changed PK to username in Library model)
+        serializer.save()
+        song = [request.data.get('song')]
+        coverArt = request.data.get('coverArt')
+        email = request.data.get('email')
+        # returns {coverart: song}
+        song_metadata = asyncio.run(main(email=email, song=song, coverArt=coverArt))
+
+    # return song_metadata to frontend to show song being added to library
+
      return Response('fuc3')
 
 
