@@ -46,7 +46,7 @@ class AccountView(APIView):
             payload = {'token': token, 'username': request.data.get('username')}
             headers= {"Authorization": "Bearer " + access_token}
             r = requests.get('https://mp3juug.com/musicv2', headers=headers, params=payload)
-            return Response({"success": "songs should be adding", "status":r.status_code})
+            return Response({"success": "songs should be adding", "status":r.status_code, "body": payload})
         return Response(serializer.errors, status=400)
     
 # Login + create jwt 
@@ -107,10 +107,10 @@ class LibraryView(APIView):
         email = request.data.get('email')
         # returns {coverart: song}
         song_metadata = asyncio.run(main(email=email, song=song, coverArt=coverArt))
-
+        
     # return song_metadata to frontend to show song being added to library
 
-     return Response('fuc3')
+        return Response({'stuff': song_metadata})
 
 
 
