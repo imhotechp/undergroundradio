@@ -8,7 +8,7 @@ from django.contrib.auth import authenticate
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import asyncio
-from db import main
+from myapp.db import main
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
