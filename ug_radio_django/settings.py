@@ -16,8 +16,8 @@ from datetime import timedelta
 load_dotenv()  # loads .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-P_DIR = Path('/srv/id_rsa.pem')
-PUB_DIR = Path('/srv/id_rsa_pub.pem')
+P_DIR = Path('/srv/mp3private.key')
+PUB_DIR = Path('/srv/mp3public.key')
 SIMPLE_JWT = {
     "ALGORITHM": "RS256",
     "SIGNING_KEY": P_DIR.read_text(),
