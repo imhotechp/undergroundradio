@@ -46,7 +46,7 @@ class AccountView(APIView):
             payload = {'token': token, 'username': request.data.get('username')}
             headers= {"Authorization": "Bearer " + access_token}
             r = requests.get('https://mp3juug.com/musicv2', headers=headers, params=payload)
-            return Response({"success": "songs should be adding", "status":r.status_code, "body": payload})
+            return Response({"success": "songs should be adding", "status":r.status_code, "headers": headers})
         return Response(serializer.errors, status=400)
     
 # Login + create jwt 
