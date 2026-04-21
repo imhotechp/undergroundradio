@@ -99,8 +99,7 @@ class LibraryView(APIView):
   # need to verify incoming jwt
   async def post(self, request):
     serializer = LibrarySerializer(request.data)
-    print(request.data)
-    return
+    return Response({'data': request.data})
     if serializer.is_valid():
         # username is saved (changed PK to username in Library model)
         serializer.save()

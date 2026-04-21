@@ -16,6 +16,6 @@ class User(AbstractUser):
 
 #. Multiple users can have multiple libraries (like playlists)
 class Library(models.Model):
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, to_field='username')
+    username = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, to_field='username')
     name = models.CharField(default='Playlist001')
     song = models.ManyToManyField(Song)
