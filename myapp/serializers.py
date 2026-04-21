@@ -68,6 +68,7 @@ class SongSerializer(serializers.ModelSerializer):
         model = Song
         song_name = serializers.CharField(required=True, min_length=1)
         artist_name = serializers.CharField(required=True, min_length=1)
+        artist_email = serializers.CharField(required=True)
         producer_name = serializers.CharField()
         lyrics = serializers.CharField()
         duration = serializers.DurationField(required=False)

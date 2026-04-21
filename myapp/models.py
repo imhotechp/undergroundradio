@@ -5,6 +5,7 @@ from django.conf import settings
 class Song(models.Model):
     song_name = models.CharField()
     artist_name = models.CharField()
+    artist_email = models.CharField()
     producer_name = models.CharField()
     lyrics = models.CharField()
     duration = models.DurationField()
@@ -19,3 +20,4 @@ class Library(models.Model):
     username = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, to_field='username')
     name = models.CharField(default='Playlist001')
     song = models.ManyToManyField(Song)
+    coverArt = models.CharField()
