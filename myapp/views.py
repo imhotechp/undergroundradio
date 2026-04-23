@@ -98,7 +98,7 @@ class SongView(APIView):
 class LibraryView(APIView):
   # need to verify incoming jwt
     def post(self, request):
-        serializer = LibrarySerializer(request.data)
+        serializer = LibrarySerializer(data=request.data)
         print(request.data)
         if serializer.is_valid():
             # username is saved (changed PK to username in Library model)
