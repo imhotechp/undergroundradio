@@ -2,6 +2,8 @@
 from rest_framework import serializers
 from myapp.models import User, Song, Library
 import re
+from django.contrib.auth import get_user_model
+User = get_user_model()
 # MUST INCLUDE EVERY FIELD HERE IN EVERY REQUEST
 class AccountSerializer(serializers.ModelSerializer):
     username = serializers.CharField(min_length=3, max_length=20)
@@ -77,6 +79,14 @@ class SongSerializer(serializers.ModelSerializer):
         nft_status = serializers.BooleanField(default=False)
 
 class LibrarySerializer(serializers.ModelSerializer):
+    username = serializers.SlugRelatedField(
+        queryset=User.objects.all(),
+        slug_field="username"
+    )
     class Meta:
         model = Library
-        fields = '__all__'
+        fields = (
+            'username',
+            'song',
+            'coverArt'
+        )
