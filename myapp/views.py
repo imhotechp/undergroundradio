@@ -42,7 +42,8 @@ class AccountView(APIView):
             if not user.is_active:
                 return Response(serializer.errors, status=400)
             # Get username id for pk
-            username_id = User.objects.filter(username=username).values_list('id', flat=True).first()
+            id = User.objects.filter(username=username).values_list('id', flat=True).first()
+            username_id = int(id)
             # create token for logged in user 
             jwt = RefreshToken.for_user(user)
             refresh_token = str(jwt) # signed tokens
