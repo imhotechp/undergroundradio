@@ -9,6 +9,7 @@ from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import asyncio
 from myapp.db import main
+from myapp.jwt import test_decode
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -98,23 +99,21 @@ class SongView(APIView):
 class LibraryView(APIView):
   # need to verify incoming jwt
     def post(self, request):
+        print("REQUEST DATA:", request.data, flush=True)
+
         serializer = LibrarySerializer(data=request.data)
-        print(request.data)
+
         if serializer.is_valid():
-            # username is saved (changed PK to username in Library model)
-            serializer.save()
-            song = [request.data.get('song')]
-            coverArt = request.data.get('coverArt')
-            email = request.data.get('email')
-            # returns {coverart: song}
-            song_metadata = asyncio.run(main(email=email, song=song, coverArt=coverArt))
+            obj = serializer.save()
+            print("CREATED:", obj, flush=True)
+
+            from .models import Library
+            print("DB COUNT:", Library.objects.count(), flush=True)
+
+            return Response({"ok": True})
         else:
-            return Response({"error": 'something didnt parse right'})
-            
-        # return song_metadata to frontend to show song being added to library
-
-            return Response({'stuff': song_metadata})
-
+            print("ERRORS:", serializer.errors, flush=True)
+            return Response(serializer.errors, status=400)
 
 
 
