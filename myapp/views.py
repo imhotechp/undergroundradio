@@ -29,6 +29,7 @@ class AccountView(APIView):
         # CREATE ACCOUNT
         token = request.query_params.get('token')
         serializer = AccountSerializer(data=request.data)
+        username = request.data.get('username')
         if serializer.is_valid():
             user = serializer.save()
             user = authenticate(
@@ -40,12 +41,14 @@ class AccountView(APIView):
                 return Response(serializer.errors, status=400)
             if not user.is_active:
                 return Response(serializer.errors, status=400)
+            # Get username id for pk
+            username_id = User.objects.filter(username=username).values_list('id', flat=True).first()
             # create token for logged in user 
             jwt = RefreshToken.for_user(user)
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
             # GET METADATA SENT TO /ADD endpoint retreive and return resource here
-            payload = {'token': token, 'username': request.data.get('username'), 'email': request.data.get('email')}
+            payload = {'token': token, 'username': username_id, 'email': request.data.get('email')}
             headers= {"Authorization": "Bearer " + access_token}
             r = requests.get('https://mp3juug.com/musicv2', headers=headers, params=payload)
             return Response({"success": "songs should be adding", "status":r.status_code, "headers": headers})
@@ -101,10 +104,6 @@ class LibraryView(APIView):
   # need to verify incoming jwt
     def post(self, request):
         print("REQUEST DATA:", request.data, flush=True)
-        username = request.data.get('username')
-        name = User.objects.filter(username=username).values_list('id', flat=True).first()
-        request.data.get('username') = name
-        print('NEW REQUEST DATA', request.data, flush=True)
         serializer = LibrarySerializer(data=request.data)
         if serializer.is_valid():
             obj = serializer.save()
