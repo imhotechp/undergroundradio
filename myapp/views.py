@@ -10,6 +10,7 @@ import requests
 import asyncio
 from myapp.db import main
 from myapp.jwt import test_decode
+from myapp.models import User
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -100,9 +101,11 @@ class LibraryView(APIView):
   # need to verify incoming jwt
     def post(self, request):
         print("REQUEST DATA:", request.data, flush=True)
-
+        username = request.data.get('username')
+        name = User.objects.filter(username=username).values_list('id', flat=True).first()
+        request.data.get('username') = name
+        print('NEW REQUEST DATA', request.data, flush=True)
         serializer = LibrarySerializer(data=request.data)
-
         if serializer.is_valid():
             obj = serializer.save()
             print("CREATED:", obj, flush=True)
