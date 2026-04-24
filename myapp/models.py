@@ -5,8 +5,8 @@ from django.conf import settings
 class Song(models.Model):
     song_name = models.CharField()
     artist_name = models.CharField()
-    artist_email = models.CharField()
-    producer_name = models.CharField()
+    email = models.CharField()
+    producer = models.CharField()
     lyrics = models.CharField()
     duration = models.DurationField()
     cover_art = models.CharField()
