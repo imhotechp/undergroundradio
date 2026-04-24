@@ -66,23 +66,23 @@ class LoginSerializer(serializers.Serializer):
         )
 
 class SongSerializer(serializers.ModelSerializer):
-    song_name = serializers.CharField(required=True, min_length=1)
+    song = serializers.CharField(required=True, min_length=1)
     artist_name = serializers.CharField(required=True, min_length=1)
-    artist_email = serializers.CharField(required=True)
-    producer_name = serializers.CharField()
+    email = serializers.CharField(required=True)
+    producer = serializers.CharField()
     lyrics = serializers.CharField()
     duration = serializers.DurationField(required=False)
-    cover_art = serializers.CharField(required=True, min_length=1)
+    coverArt = serializers.CharField(required=True, min_length=1)
     plays = serializers.IntegerField(default=0)
     nft_status = serializers.BooleanField(default=False)
     
     class Meta:
         model = Song
         fields = (
-            'song_name',
+            'song',
             'artist_name',
-            'artist_email',
-            'cover_art',
+            'email',
+            'coverArt',
             )
 
         
