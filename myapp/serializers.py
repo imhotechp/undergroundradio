@@ -66,15 +66,15 @@ class LoginSerializer(serializers.Serializer):
         )
 
 class SongSerializer(serializers.ModelSerializer):
-    song = serializers.CharField(required=True, min_length=1, default='')
-    artist_name = serializers.CharField(required=True, min_length=1, default='')
-    email = serializers.CharField(required=True, default='')
-    producer = serializers.CharField(required=False, default='')
-    lyrics = serializers.CharField(required=False, default='')
-    duration = serializers.DurationField(required=False, default='')
-    coverArt = serializers.CharField(required=True, min_length=1, default='')
-    plays = serializers.IntegerField(required=False, default=0)
-    nft_status = serializers.BooleanField(required=False, default=False)
+    song = serializers.CharField(required=True, min_length=1)
+    artist_name = serializers.CharField(required=True, min_length=1)
+    email = serializers.CharField(required=True)
+    producer = serializers.CharField(required=False)
+    lyrics = serializers.CharField(required=False)
+    duration = serializers.DurationField(required=False)
+    coverArt = serializers.CharField(required=True, min_length=1)
+    plays = serializers.IntegerField(required=False)
+    nft_status = serializers.BooleanField(default=False)
     
     class Meta:
         model = Song
