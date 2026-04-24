@@ -59,34 +59,34 @@ class AccountSerializer(serializers.ModelSerializer):
         return user
     
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(min_length=3, max_length=20)
-    password = serializers.CharField(
-        min_length=8,
-        write_only=True
-    )
+        username = serializers.CharField(min_length=3, max_length=20)
+        password = serializers.CharField(
+            min_length=8,
+            write_only=True
+        )
 
 class SongSerializer(serializers.ModelSerializer):
+    song_name = serializers.CharField(required=True, min_length=1)
+    artist_name = serializers.CharField(required=True, min_length=1)
+    artist_email = serializers.CharField(required=True)
+    producer_name = serializers.CharField()
+    lyrics = serializers.CharField()
+    duration = serializers.DurationField(required=False)
+    cover_art = serializers.CharField(required=True, min_length=1)
+    plays = serializers.IntegerField(default=0)
+    nft_status = serializers.BooleanField(default=False)
+    
     class Meta:
         model = Song
-        song_name = serializers.CharField(required=True, min_length=1)
-        artist_name = serializers.CharField(required=True, min_length=1)
-        artist_email = serializers.CharField(required=True)
-        producer_name = serializers.CharField()
-        lyrics = serializers.CharField()
-        duration = serializers.DurationField(required=False)
-        cover_art = serializers.CharField(required=True, min_length=1)
-        plays = serializers.IntegerField(default=0)
-        nft_status = serializers.BooleanField(default=False)
+        fields = (
+            'song_name',
+            'artist_name',
+            'artist_email',
+            'cover_art',
+            )
 
+        
 class LibrarySerializer(serializers.ModelSerializer):
-    username = serializers.SlugRelatedField(
-        queryset=User.objects.all(),
-        slug_field="username"
-    )
     class Meta:
         model = Library
-        fields = (
-            'username',
-            'song',
-            'coverArt'
-        )
+        fields = '__all__'
