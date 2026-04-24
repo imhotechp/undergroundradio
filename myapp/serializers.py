@@ -83,6 +83,11 @@ class SongSerializer(serializers.ModelSerializer):
             'artist_name',
             'email',
             'coverArt',
+            'producer',
+            'lyrics',
+            'duration',
+            'plays',
+            'nft_status'
             )
 
         
