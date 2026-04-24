@@ -2,6 +2,7 @@ from rest_framework.response import Response
 from rest_framework import exceptions
 from rest_framework.views import APIView
 from myapp.serializers import AccountSerializer, LoginSerializer, SongSerializer, LibrarySerializer
+from .models import Library, Song
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
 from django.contrib.auth import authenticate
@@ -106,17 +107,22 @@ class LibraryView(APIView):
     def post(self, request):
         print("REQUEST DATA:", request.data, flush=True)
         serializer = LibrarySerializer(data=request.data)
-        if serializer.is_valid():
+        serializer2 = SongSerializer(data=request.data)
+        if serializer.is_valid() & serializer2.is_valid():
             obj = serializer.save()
+            obj2 = serializer2.save()
             print("CREATED:", obj, flush=True)
+            print("created 2", obj2, flush=True)
+            
 
-            from .models import Library
             print("DB COUNT:", Library.objects.count(), flush=True)
+            print("DB COUNT:", Song.objects.count(), flush=True)
 
             return Response({"ok": True})
         else:
             print("ERRORS:", serializer.errors, flush=True)
-            return Response(serializer.errors, status=400)
+            print('errosrs2:', serializer2.errors, flush=True)
+            return Response(serializer2.errors, status=400)
 
 
 
