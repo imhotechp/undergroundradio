@@ -119,15 +119,15 @@ class LibraryView(APIView):
             else:
                 print('errors:', song_serializer.errors, flush=True)
                 return Response(song_serializer.errors, status=400)
-        for pks in results:
-            data = request.data.copy()
-            data['song'] = pks
-            library_serializer = LibrarySerializer(data=data)
-            if library_serializer.is_valid():
-                obj = library_serializer.save()
-                print('Objects should be in user library')
-            else:
-                return Response(library_serializer.errors, status=400)
+        # for pks in results:
+        #     data = request.data.copy()
+        #     data['song'] = pks
+        #     library_serializer = LibrarySerializer(data=data)
+        #     if library_serializer.is_valid():
+        #         obj = library_serializer.save()
+        #         print('Objects should be in user library')
+        #     else:
+        #         return Response(library_serializer.errors, status=400)
         return Response({
             "created_ids": results
         })
