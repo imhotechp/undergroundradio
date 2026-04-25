@@ -106,7 +106,7 @@ class LibraryView(APIView):
     User = get_user_model()
     def post(self, request):
         data = request.data.copy()
-        data['song'] = [3] # has to be number array
+        data['song'] = [4,5] # has to be number array
         username = data['username']
         user = User.objects.get(username=username)
         serializer = LibrarySerializer(data=data)
@@ -115,7 +115,7 @@ class LibraryView(APIView):
             print(serializer.errors)
             # username is saved (changed PK to username in Library model)
             serializer.save(username=user)
-            song = [request.data.get('song')]
+            song = request.data.get('song')
             coverArt = request.data.get('coverArt')
             email = request.data.get('email')
             # returns {coverart: song}
