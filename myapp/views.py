@@ -119,6 +119,7 @@ class LibraryView(APIView):
             coverArt = request.data.get('coverArt')
             email = request.data.get('email')
             # returns {coverart: song}
+            return Response({"shid": "nica"})
             song_metadata = asyncio.run(main(email=email, song=song, coverArt=coverArt))
         else:
             print(serializer.errors)
