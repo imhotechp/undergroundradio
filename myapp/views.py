@@ -111,6 +111,7 @@ class LibraryView(APIView):
         serializer = LibrarySerializer(data=data)
         print(data)
         if serializer.is_valid():
+            print(serializer.errors)
             # username is saved (changed PK to username in Library model)
             serializer.save(username=username)
             song = [request.data.get('song')]
