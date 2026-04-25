@@ -120,19 +120,11 @@ class LibraryView(APIView):
             # returns {coverart: song}
             song_metadata = asyncio.run(main(email=email, song=song, coverArt=coverArt))
         else:
+            print(serializer.errors)
             return Response({"error": 'something didnt parse right'})
 
-        # for pks in results:
-        #     data = request.data.copy()
-        #     data['song'] = pks
-        #     library_serializer = LibrarySerializer(data=data)
-        #     if library_serializer.is_valid():
-        #         obj = library_serializer.save()
-        #         print('Objects should be in user library')
-        #     else:
-        #         return Response(library_serializer.errors, status=400)
         return Response({
-            "created_ids": results
+            "created_ids": 'results'
         })
 
 
