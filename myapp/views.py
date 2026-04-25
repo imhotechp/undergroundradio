@@ -104,21 +104,22 @@ class SongView(APIView):
 # 3/13/26 use email + song to search db and add to library 
 class LibraryView(APIView):
   # need to verify incoming jwt
-    def post(self, request):
-        songs = request.data.get('song') 
-        results = []
-        # Save all songs and add pks to array
-        for song_value in songs:
-            data = request.data.copy()
-            data['song'] = song_value  # set one value at a time
+     def post(self, request):
+        songs = request.data.get('song')
+        songs['song'] = 3
+        serializer = LibrarySerializer(data=request.data)
+        print(request.data)
+        if serializer.is_valid():
+            # username is saved (changed PK to username in Library model)
+            serializer.save()
+            song = [request.data.get('song')]
+            coverArt = request.data.get('coverArt')
+            email = request.data.get('email')
+            # returns {coverart: song}
+            song_metadata = asyncio.run(main(email=email, song=song, coverArt=coverArt))
+        else:
+            return Response({"error": 'something didnt parse right'})
 
-            song_serializer = SongSerializer(data=data)
-            if song_serializer.is_valid():
-                obj = song_serializer.save()
-                results.append(obj.pk)
-            else:
-                print('errors:', song_serializer.errors, flush=True)
-                return Response(song_serializer.errors, status=400)
         # for pks in results:
         #     data = request.data.copy()
         #     data['song'] = pks
