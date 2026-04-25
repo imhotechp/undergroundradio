@@ -105,7 +105,7 @@ class SongView(APIView):
 class LibraryView(APIView):
   # need to verify incoming jwt
     def post(self, request):
-        songs = request.data.getlist('song') 
+        songs = request.data.get('song') 
         results = []
         # Save all songs and add pks to array
         for song_value in songs:
