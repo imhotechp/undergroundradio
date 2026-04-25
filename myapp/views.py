@@ -105,18 +105,29 @@ class SongView(APIView):
 class LibraryView(APIView):
   # need to verify incoming jwt
     def post(self, request):
-        new_data = request.data.copy()
-        new_data['song'] = new_data['song'][0]
-        print("REQUEST DATA:", new_data, flush=True)
-        serializer2 = SongSerializer(data=new_data)
-        if serializer2.is_valid():
-            obj2 = serializer2.save()
-            print("created 2", obj2, flush=True)
-            print("DB COUNT:", Song.objects.count(), flush=True)
-            return Response({"ok": True})
-        else:
-            print('errosrs2:', serializer2.errors, flush=True)
-            return Response(serializer2.errors, status=400)
+        songs = request.data.getlist('song') 
+        results = []
+        # Save all songs and add pks to array
+        for song_value in songs:
+            data = request.data.copy()
+            data['song'] = song_value  # set one value at a time
 
+            song_serializer = SongSerializer(data=data)
+            if song_serializer.is_valid():
+                obj = song_serializer.save()
+                results.append(obj.pk)
+            else:
+                print('errors:', song_serializer.errors, flush=True)
+                return Response(song_serializer.errors, status=400)
+        for pks in results:
+            data = request.data.copy()
+            data['song'] = pks
+            library_serializer = LibrarySerializer(data=data)
+            if library_serializer.is_valid():
+                obj = library_serializer.save()
+                print('Objects should be in user library')
+        return Response({
+            "created_ids": results
+        })
 
 
