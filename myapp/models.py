@@ -6,12 +6,12 @@ class Song(models.Model):
     song = models.CharField()
     artist_name = models.CharField()
     email = models.CharField()
-    producer = models.CharField()
-    lyrics = models.CharField()
-    duration = models.DurationField()
+    producer = models.CharField(null=True, blank=True)
+    lyrics = models.CharField(null=True, blank=True)
+    duration = models.DurationField(null=True, blank=True)
     coverArt = models.CharField()
-    plays = models.IntegerField()
-    nft_status = models.BooleanField()
+    plays = models.IntegerField(null=True, blank=True)
+    nft_status = models.BooleanField(null=True, blank=True)
 class User(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
 
