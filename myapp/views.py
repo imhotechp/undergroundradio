@@ -105,7 +105,9 @@ class SongView(APIView):
 class LibraryView(APIView):
     User = get_user_model()
     def post(self, request):
-        username = request.data.get('username')
+        data = request.data.copy()
+        data['song'] = [3] # has to be number array
+        username = data['username']
         user = User.objects.get(username=username)
         serializer = LibrarySerializer(data=request.data)
         print(request.data)
