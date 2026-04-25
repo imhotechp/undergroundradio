@@ -3,13 +3,13 @@ from django.db import models
 from django.conf import settings
 
 class Song(models.Model):
-    song_name = models.CharField()
+    song = models.CharField()
     artist_name = models.CharField()
     email = models.CharField()
     producer = models.CharField()
     lyrics = models.CharField()
     duration = models.DurationField()
-    cover_art = models.CharField()
+    coverArt = models.CharField()
     plays = models.IntegerField()
     nft_status = models.BooleanField()
 class User(AbstractUser):
