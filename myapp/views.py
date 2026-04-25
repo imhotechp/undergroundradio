@@ -106,7 +106,7 @@ class LibraryView(APIView):
 
      def post(self, request):
         data = request.data.copy()
-        data['song'] = 3
+        data['song'] = [3]
         username = data['username']
         serializer = LibrarySerializer(data=data)
         print(data)
