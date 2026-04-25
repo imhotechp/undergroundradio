@@ -103,15 +103,16 @@ class SongView(APIView):
 
 # 3/13/26 use email + song to search db and add to library 
 class LibraryView(APIView):
-  # need to verify incoming jwt
+
      def post(self, request):
         data = request.data.copy()
         data['song'] = 3
+        username = data['username']
         serializer = LibrarySerializer(data=data)
         print(data)
         if serializer.is_valid():
             # username is saved (changed PK to username in Library model)
-            serializer.save()
+            serializer.save(username=username)
             song = [request.data.get('song')]
             coverArt = request.data.get('coverArt')
             email = request.data.get('email')
