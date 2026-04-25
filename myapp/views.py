@@ -105,6 +105,9 @@ class SongView(APIView):
 class LibraryView(APIView):
     User = get_user_model()
     def post(self, request):
+        jwt = request.headers.get('authorization')
+        print(jwt)
+        return Response({'ok': 'nig'})
         songs = request.data.get('song')
         results = []
         # Save all songs and add pks to array
