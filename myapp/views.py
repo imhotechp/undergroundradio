@@ -105,28 +105,36 @@ class SongView(APIView):
 class LibraryView(APIView):
     User = get_user_model()
     def post(self, request):
+        songs = request.data.get('song')
+        results = []
+        # Save all songs and add pks to array
+        for song_value in songs:
+            data = request.data.copy()
+            data['song'] = song_value  # set one value at a time
+
+            song_serializer = SongSerializer(data=data)
+            if song_serializer.is_valid():
+                obj = song_serializer.save()
+                results.append(obj.pk)
+            else:
+                print('errors:', song_serializer.errors, flush=True)
+                return Response(song_serializer.errors, status=400)
         data = request.data.copy()
-        data['song'] = [4,5] # has to be number array
+        data['song'] = results
         username = data['username']
         user = User.objects.get(username=username)
         serializer = LibrarySerializer(data=data)
         print(data)
         if serializer.is_valid():
             print(serializer.errors)
-            # username is saved (changed PK to username in Library model)
             serializer.save(username=user)
             song = request.data.get('song')
             coverArt = request.data.get('coverArt')
             email = request.data.get('email')
-            # returns {coverart: song}
-            return Response({"shid": "nica"})
+            return Response({"song(s)": "should have added to library"})
             song_metadata = asyncio.run(main(email=email, song=song, coverArt=coverArt))
         else:
             print(serializer.errors)
             return Response({"error": 'something didnt parse right'})
-
-        return Response({
-            "created_ids": 'results'
-        })
 
 
