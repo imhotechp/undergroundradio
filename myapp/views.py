@@ -108,7 +108,7 @@ class LibraryView(APIView):
         new_data = request.data.copy()
         new_data['song'] = new_data['song'][0]
         print("REQUEST DATA:", new_data, flush=True)
-        serializer2 = SongSerializer(data=request.data)
+        serializer2 = SongSerializer(data=new_data)
         if serializer2.is_valid():
             obj2 = serializer2.save()
             print("created 2", obj2, flush=True)
