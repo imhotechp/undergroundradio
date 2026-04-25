@@ -5,7 +5,6 @@ with open("/srv/id_rsa_pub.pem") as f:
 
 #  USE THIS IN MP3JUUG 
 def test_decode(token):
-    print(public_key)
     print(token)
     payload = jwt.decode(
         token, 
