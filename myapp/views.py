@@ -5,7 +5,7 @@ from myapp.serializers import AccountSerializer, LoginSerializer, SongSerializer
 from .models import Library, Song
 from rest_framework.permissions import AllowAny
 from django.utils import timezone
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 import asyncio
@@ -103,17 +103,16 @@ class SongView(APIView):
 
 # 3/13/26 use email + song to search db and add to library 
 class LibraryView(APIView):
-
-     def post(self, request):
-        data = request.data.copy()
-        data['song'] = [3]
-        username = data['username']
-        serializer = LibrarySerializer(data=data)
-        print(data)
+    User = get_user_model()
+    def post(self, request):
+        username = request.data.get('username')
+        user = User.objects.get(username=username)
+        serializer = LibrarySerializer(data=request.data)
+        print(request.data)
         if serializer.is_valid():
             print(serializer.errors)
             # username is saved (changed PK to username in Library model)
-            serializer.save(username=username)
+            serializer.save(username=user)
             song = [request.data.get('song')]
             coverArt = request.data.get('coverArt')
             email = request.data.get('email')
