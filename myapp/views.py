@@ -106,6 +106,8 @@ class LibraryView(APIView):
     User = get_user_model()
     def post(self, request):
         jwt = request.headers.get('authorization').split(" ")[1]
+        print(jwt)
+        return Response({'ok':'ok'})
         if test_decode(jwt):
             songs = request.data.get('song')
             results = []
