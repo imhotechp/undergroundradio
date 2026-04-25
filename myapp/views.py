@@ -106,7 +106,8 @@ class LibraryView(APIView):
   # need to verify incoming jwt
      def post(self, request):
         songs = request.data.get('song')
-        songs['song'] = 3
+        print(songs)
+        return
         serializer = LibrarySerializer(data=request.data)
         print(request.data)
         if serializer.is_valid():
