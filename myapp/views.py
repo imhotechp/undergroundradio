@@ -12,6 +12,8 @@ import asyncio
 from myapp.db import main
 from myapp.jwt import test_decode
 from myapp.models import User
+
+# this will be ground (homepage)
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
@@ -65,7 +67,6 @@ class LoginView(APIView):
             serializer = LoginSerializer(data=request.data)
             username = request.data.get("username")
             password = request.data.get("password")
-            token = request.query_params.get('token') # get this from URL query
             if serializer.is_valid():
                 user = authenticate(
                     request=request,
@@ -79,18 +80,14 @@ class LoginView(APIView):
                 jwt = RefreshToken.for_user(user)
                 refresh_token = str(jwt) # signed tokens
                 access_token = str(jwt.access_token) # signed tokens
-                if not token:
-                    raise exceptions.APIException({'error': 'No token'})
-                r = request.get('https://mp3juug.com/token')
+                # after sign in api get user home page 
+                r = request.get('http://undergroundradio.us/ground') 
                 return Response(
                     {
                         "access": access_token,
                         "refresh": refresh_token
                         }
                     )
-                # create RSA Key pair (private and public)
-                # give public key to MP3JUUG
-                # sign jwts with private key
         except:
             raise exceptions.APIException({'error': "login credentials not valid"})
 
@@ -101,39 +98,40 @@ class SongView(APIView):
     def nft(request):
         return Response('fuc4')
 
-# 3/13/26 use email + song to search db and add to library 
 class LibraryView(APIView):
+    # Get user object since it's foreign key in library table
     User = get_user_model()
     def post(self, request):
+        # check jwt & proceed if valid
         jwt = request.headers.get('authorization').split(" ")[1]
         if test_decode(jwt):
             songs = request.data.get('song')
             results = []
-            # Save all songs and add pks to array
+            # Save each song individually since request song param is []
             for song_value in songs:
+                # copy reuqest.data since immutable & set one value at a time 
                 data = request.data.copy()
-                data['song'] = song_value  # set one value at a time
+                data['song'] = song_value  
 
                 song_serializer = SongSerializer(data=data)
                 if song_serializer.is_valid():
+                    # save song(s) to song table
                     obj = song_serializer.save()
+                    # Since song objects are saved to library we save pks
                     results.append(obj.pk)
                 else:
                     print('errors:', song_serializer.errors, flush=True)
                     return Response(song_serializer.errors, status=400)
+            # same thing for library..
             data = request.data.copy()
             data['song'] = results
+            # Gets user object using request username param
             username = data['username']
             user = User.objects.get(username=username)
             serializer = LibrarySerializer(data=data)
-            print(data)
             if serializer.is_valid():
-                print(serializer.errors)
+                # User object is foreign key to library table so we include
                 serializer.save(username=user)
-                song = request.data.get('song')
-                coverArt = request.data.get('coverArt')
-                email = request.data.get('email')
-                asyncio.run(main(email=email, song=song, coverArt=coverArt))
                 return Response({"song(s)": "should have added to library"})
             else:
                 print(serializer.errors)
