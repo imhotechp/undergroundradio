@@ -21,7 +21,7 @@ async def main(email, song, coverArt):
                 # add song urls to array
                 songs.append(urls)
             await client.close()
-
+        print(coverArt, songs)
         return {coverArt: songs}
 
     except Exception as e:

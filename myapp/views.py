@@ -133,8 +133,8 @@ class LibraryView(APIView):
                 song = request.data.get('song')
                 coverArt = request.data.get('coverArt')
                 email = request.data.get('email')
+                asyncio.run(main(email=email, song=song, coverArt=coverArt))
                 return Response({"song(s)": "should have added to library"})
-                song_metadata = asyncio.run(main(email=email, song=song, coverArt=coverArt))
             else:
                 print(serializer.errors)
                 return Response({"error": 'something didnt parse right'})
