@@ -57,33 +57,31 @@ class LoginView(APIView):
     def post(self, request):   
         print(request.data)    
         try:
-            serializer = LoginSerializer(data=request.data)
             username = request.data.get("username")
             password = request.data.get("password")
-            if serializer.is_valid():
-                user = authenticate(
+            user = authenticate(
                     request=request,
                     username=username,
                     password=password
                 )
-                if not user:
-                    raise exceptions.APIException({'error': 'Invalid credentials'})
-                if not user.is_active:
-                    raise exceptions.APIException({'error': 'User is inactive'})
-                jwt = RefreshToken.for_user(user)
-                # SHOULD POSSIBLY USE REFRESH TOKEN FOR LOGIN(S) 
-                # ACCESS TOKEN FOR INITIAL ACC/RESOURCE 
-                refresh_token = str(jwt) # signed tokens
-                access_token = str(jwt.access_token) # signed tokens
-                # after sign in api get user home page 
-                # r = request.get('http://undergroundradio.us/ground') 
-                print('login is successful')
-                return Response(
-                    {
-                        "access": access_token,
-                        "refresh": refresh_token
-                        }
-                    )
+            if not user:
+                raise exceptions.APIException({'error': 'Invalid credentials'})
+            if not user.is_active:
+                raise exceptions.APIException({'error': 'User is inactive'})
+            jwt = RefreshToken.for_user(user)
+            # SHOULD POSSIBLY USE REFRESH TOKEN FOR LOGIN(S) 
+            # ACCESS TOKEN FOR INITIAL ACC/RESOURCE 
+            refresh_token = str(jwt) # signed tokens
+            access_token = str(jwt.access_token) # signed tokens
+            # after sign in api get user home page 
+            # r = request.get('http://undergroundradio.us/ground') 
+            print('login is successful')
+            return Response(
+                {
+                    "access": access_token,
+                    "refresh": refresh_token
+                    }
+                )
         except:
             raise exceptions.APIException({'error': "login credentials not valid"})
 
