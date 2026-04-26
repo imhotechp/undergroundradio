@@ -9,6 +9,6 @@ def test_decode(token):
         token, 
         public_key, 
         algorithms=['RS256'],
-        options={"verify_exp": False}
+        options={"verify_exp": True}
     )
     return payload

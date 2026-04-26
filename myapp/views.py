@@ -1,15 +1,11 @@
 from rest_framework.response import Response
 from rest_framework import exceptions
 from rest_framework.views import APIView
-from myapp.serializers import AccountSerializer, LoginSerializer, SongSerializer, LibrarySerializer
-from .models import Library, Song
+from myapp.serializers import AccountSerializer, SongSerializer, LibrarySerializer
 from rest_framework.permissions import AllowAny
-from django.utils import timezone
 from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
-import asyncio
-from myapp.db import main
 from myapp.jwt import test_decode
 from myapp.models import User
 
@@ -74,14 +70,9 @@ class LoginView(APIView):
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
             # after sign in api get user home page 
-            # r = request.get('http://undergroundradio.us/ground') 
+            r = request.get('http://undergroundradio.us/ground') 
             print('login is successful')
-            return Response(
-                {
-                    "access": access_token,
-                    "refresh": refresh_token
-                    }
-                )
+            return Response({"Login": "True"})
         except:
             raise exceptions.APIException({'error': "login credentials not valid"})
 
