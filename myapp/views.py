@@ -14,17 +14,13 @@ from myapp.jwt import test_decode
 from myapp.models import User
 
 # this will be ground (homepage)
+# homepage, library, music streaming part
 class HomeView(APIView):
     permission_classes = [AllowAny]
     def get(self, request):
         return Response({'home': 'shit otw holmes'})
-# Creates user account
-# create user + add song to library
-# https://undergroundradio.us/music?token=xxxx
-# create RSA Key pair (private and public)
-# give public key to MP3JUUG
-# sign jwts with private key
 
+# create user + logins + add song(s) to library
 class AccountView(APIView):
     permission_classes = [AllowAny]
 
@@ -35,6 +31,7 @@ class AccountView(APIView):
         username = request.data.get('username')
         if serializer.is_valid():
             user = serializer.save()
+            # LOGIN
             user = authenticate(
             request=request,
             username=request.data.get('username'),
@@ -44,10 +41,6 @@ class AccountView(APIView):
                 return Response(serializer.errors, status=400)
             if not user.is_active:
                 return Response(serializer.errors, status=400)
-            # Get username id for pk
-            #id = User.objects.filter(username=username).values_list('id', flat=True).first()
-            # username_id = int(id)
-            # create token for logged in user 
             jwt = RefreshToken.for_user(user)
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
@@ -55,10 +48,10 @@ class AccountView(APIView):
             payload = {'token': token, 'username': username, 'email': request.data.get('email')}
             headers= {"Authorization": "Bearer " + access_token}
             r = requests.get('https://mp3juug.com/musicv2', headers=headers, params=payload)
-            return Response({"success": "songs should be adding", "status":r.status_code, "headers": headers})
+            return Response({"success": "songs should be adding", "status":r.status_code})
         return Response(serializer.errors, status=400)
     
-# Login + create jwt 
+# Login + homepage 
 class LoginView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):   
@@ -78,10 +71,13 @@ class LoginView(APIView):
                 if not user.is_active:
                     raise exceptions.APIException({'error': 'User is inactive'})
                 jwt = RefreshToken.for_user(user)
+                # SHOULD POSSIBLY USE REFRESH TOKEN FOR LOGIN(S) 
+                # ACCESS TOKEN FOR INITIAL ACC/RESOURCE 
                 refresh_token = str(jwt) # signed tokens
                 access_token = str(jwt.access_token) # signed tokens
                 # after sign in api get user home page 
-                r = request.get('http://undergroundradio.us/ground') 
+                # r = request.get('http://undergroundradio.us/ground') 
+                print('login is successful')
                 return Response(
                     {
                         "access": access_token,

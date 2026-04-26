@@ -1,8 +1,6 @@
 from pymongo import AsyncMongoClient
 
 # Create a new client and connect to the server
-
-
 async def main(email, song, coverArt):
     try:
         uri = "mongodb+srv://GM:LNTC@amoco-cadiz.9c3xn4v.mongodb.net/?appName=Amoco-Cadiz"
