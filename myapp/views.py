@@ -21,11 +21,10 @@ class HomeView(APIView):
         songs = Library.objects.filter(username=user)
         for song_objects in songs:
             song_list = song_objects.song.all()
-            for s in song_list.values():
-                library.append(s)
-                # ARRAY OF ACTUAL SONG OBJECTS FROM DJANGO MODEL
-                for song_objects in library:
-                    print(song_objects.song)
+            for songs in song_list:
+                library.append(songs)
+                for s in songs:
+                    tracklist.append(s.song)
                 print(library)
 
         # jwt to pass to library?
