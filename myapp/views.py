@@ -17,12 +17,16 @@ class HomeView(APIView):
     def get(self, request):
         user = request.user
         library = []
+        tracklist = []
         songs = Library.objects.filter(username=user)
         for song_objects in songs:
             song_list = song_objects.song.all()
             for s in song_list.values():
                 library.append(s)
-                print(library)
+                # ARRAY OF ACTUAL SONG OBJECTS FROM DJANGO MODEL
+                for song_objects in library:
+                    tracklist.append(song_objects.song)
+                print(library, tracklist)
 
         # jwt to pass to library?
         jwt = request.headers.get('authorization').split(" ")[1]
