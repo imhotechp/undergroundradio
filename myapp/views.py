@@ -17,9 +17,9 @@ class HomeView(APIView):
     def get(self, request):
         user = request.user
         library = []
-        songs = Library.objects.filter(username=user).values()
+        songs = Library.objects.filter(username=user)
         for song_objects in songs:
-            library.append(song_objects)
+            library.append(song_objects.song.all())
         print(library)
 
         # jwt to pass to library?
