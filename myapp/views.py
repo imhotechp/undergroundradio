@@ -70,12 +70,12 @@ class LoginView(APIView):
             access_token = str(jwt.access_token) # signed tokens
             # after sign in api get user home page 
             header = {"Authorization": 'Bearer {access_token}'}
-            r = requests.get('http://undergroundradio.us/ground/', headers=header)
+            requests.get('http://undergroundradio.us/ground/', headers=header)
             # IF JWT EXPIRE DO REFRESH CONDITION 
             print('login is successful')
             return Response({"Login": "True"})
         except:
-            raise exceptions.APIException({'error': "login credentials not valid"})
+          return Response({'error': "login credentials not valid"})
 
 
 class SongView(APIView):
