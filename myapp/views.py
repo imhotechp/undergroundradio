@@ -23,7 +23,7 @@ class HomeView(APIView):
             song_list = song_objects.song.all()
             for songs in song_list:
                 library.append(songs)
-                for s in songs:
+                for s in library:
                     tracklist.append(s.song)
                 print(library, tracklist)
 
