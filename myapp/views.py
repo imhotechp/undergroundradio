@@ -24,9 +24,10 @@ class HomeView(APIView):
             song_list = song_objects.song.all()
             for songs in song_list:
                 library.append(songs)
+                # ACUTAUL SONG OBJ FROM DJANGO
                 for s in library:
                     tracklist.append(s.song)
-                print(library, len(tracklist))
+                print(tracklist)
 
         # jwt to pass to library?
         jwt = request.headers.get('authorization').split(" ")[1]
