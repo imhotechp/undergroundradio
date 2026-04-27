@@ -16,8 +16,8 @@ class HomeView(APIView):
     # GET LIST of songs per user (library)
     def get(self, request):
         user = request.user
-        songs = Library.objects.filter(username=user)
-        print(songs.song)
+        songs = Library.objects.filter(username=user).values()
+        print(songs)
 
         # jwt to pass to library?
         jwt = request.headers.get('authorization').split(" ")[1]
