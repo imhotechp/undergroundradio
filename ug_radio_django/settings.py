@@ -16,8 +16,8 @@ from datetime import timedelta
 load_dotenv()  # loads .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-P_DIR = Path('/srv/id_rsa')
-PUB_DIR = Path('/srv/id_rsa_pub.pem')
+P_DIR = Path('/srv/mp3private.key')
+PUB_DIR = Path('/srv/mp3public.key')
 SIMPLE_JWT = {
     "ALGORITHM": "RS256",
     "SIGNING_KEY": P_DIR.read_text(),
@@ -36,6 +36,7 @@ SECRET_KEY = 'django-insecure--00vaxs5nwhlgov1x09&-z7=c6e3h@2l6oit(*unsxix5=o+4-
 DEBUG = True
 
 ALLOWED_HOSTS = [
+    '127.0.0.1',
     '72.61.75.183',
     'undergroundradio.us'
 ]

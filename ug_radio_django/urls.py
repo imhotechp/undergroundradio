@@ -18,9 +18,9 @@ from django.urls import path
 from myapp.views import HomeView, AccountView, LoginView, SongView, LibraryView
 
 urlpatterns = [
-    path('', HomeView.as_view()),
-    path('music/', AccountView.as_view()),
+    path('ground/', HomeView.as_view()),
+    path('musicv2/', AccountView.as_view()),
     path('login/', LoginView.as_view()),
     path('songs/', SongView.as_view()),
-    path('library/', LibraryView.as_view()),
+    path('add/', LibraryView.as_view()),
 ]

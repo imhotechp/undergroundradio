@@ -1,6 +1,6 @@
 import jwt
 # local: /Users/colby/.ssh/id_rsa_pub.pem
-with open("/srv/id_rsa_pub.pem") as f:
+with open("/srv/mp3public.key") as f:
     public_key = f.read()
 
 #  USE THIS IN MP3JUUG 

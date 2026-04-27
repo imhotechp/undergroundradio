@@ -2,7 +2,8 @@
 from rest_framework import serializers
 from myapp.models import User, Song, Library
 import re
-from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
+User = get_user_model()
 # MUST INCLUDE EVERY FIELD HERE IN EVERY REQUEST
 class AccountSerializer(serializers.ModelSerializer):
     username = serializers.CharField(min_length=3, max_length=20)
@@ -12,7 +13,6 @@ class AccountSerializer(serializers.ModelSerializer):
     )
     email = serializers.EmailField()
     phone_number = serializers.CharField()
-    date_created = serializers.DateTimeField(read_only=True)
 
     class Meta:
         model = User
@@ -21,7 +21,6 @@ class AccountSerializer(serializers.ModelSerializer):
             'password',
             'email',
             'phone_number',
-            'date_created',
         )
 
     #. validates input
@@ -60,24 +59,38 @@ class AccountSerializer(serializers.ModelSerializer):
         return user
     
 class LoginSerializer(serializers.Serializer):
-    username = serializers.CharField(min_length=3, max_length=20)
-    password = serializers.CharField(
-        min_length=8,
-        write_only=True
-    )
+        username = serializers.CharField(min_length=3, max_length=20)
+        password = serializers.CharField(
+            min_length=8,
+            write_only=True
+        )
 
 class SongSerializer(serializers.ModelSerializer):
+    song = serializers.CharField(required=True, min_length=1)
+    artist_name = serializers.CharField(required=True, min_length=1)
+    email = serializers.CharField(required=True)
+    producer = serializers.CharField(required=False)
+    lyrics = serializers.CharField(required=False)
+    duration = serializers.DurationField(required=False)
+    coverArt = serializers.CharField(required=True, min_length=1)
+    plays = serializers.IntegerField(required=False)
+    nft_status = serializers.BooleanField(default=False)
+    
     class Meta:
         model = Song
-        song_name = serializers.CharField(required=True, min_length=1)
-        artist_name = serializers.CharField(required=True, min_length=1)
-        producer_name = serializers.CharField(min_length=1)
-        lyrics = serializers.CharField(min_length=1)
-        duration = serializers.DurationField(required=True)
-        cover_art = serializers.CharField(required=True, min_length=1)
-        plays = serializers.IntegerField(default=0)
-        nft_status = serializers.BooleanField(default=False)
+        fields = (
+            'song',
+            'artist_name',
+            'email',
+            'coverArt',
+            'producer',
+            'lyrics',
+            'duration',
+            'plays',
+            'nft_status'
+            )
 
+        
 class LibrarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Library
