@@ -20,7 +20,7 @@ class HomeView(APIView):
         songs = Library.objects.filter(username=user)
         for song_objects in songs:
             song_list = song_objects.song.all()
-            for s in song_list:
+            for s in song_list.values():
                 library.append(s.name)
                 print(library)
 
