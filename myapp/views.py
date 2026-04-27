@@ -56,7 +56,6 @@ class LoginView(APIView):
             username = request.data.get("username")
             password = request.data.get("password")
             user = authenticate(
-                    request=request,
                     username=username,
                     password=password
                 )
@@ -70,7 +69,6 @@ class LoginView(APIView):
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
             # after sign in api get user home page 
-            r = request.get('http://undergroundradio.us/ground') 
             print('login is successful')
             return Response({"Login": "True"})
         except:
