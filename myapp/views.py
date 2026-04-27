@@ -13,7 +13,12 @@ from myapp.models import User
 # homepage, library, music streaming part
 class HomeView(APIView):
     permission_classes = [AllowAny]
+    # GET LIST of songs per user (library)
     def get(self, request):
+        print(request.user)
+        # jwt to pass to library?
+        jwt = request.headers.get('authorization').split(" ")[1]
+
         return Response({'home': 'shit otw holmes'})
 
 # create user + logins + add song(s) to library
