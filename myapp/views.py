@@ -14,8 +14,8 @@ from myapp.models import User, Library
 # homepage, library, music streaming part
 class HomeView(APIView):
     permission_classes = [AllowAny]
-    # GET LIST of songs per user (library)
     def get(self, request):
+        # GET LIST of songs per user (library)
         user = request.user
         library = []
         tracklist = []
