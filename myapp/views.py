@@ -72,7 +72,7 @@ class LoginView(APIView):
             header = {"Authorization": 'Bearer ' + access_token}
             requests.get('http://undergroundradio.us/ground/', headers=header)
             # IF JWT EXPIRE DO REFRESH CONDITION 
-            print('login is successful', header)
+            print('login is successful')
             return Response({"Login": "True"})
         except:
           return Response({'error': "login credentials not valid"})
