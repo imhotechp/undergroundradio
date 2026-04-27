@@ -97,10 +97,18 @@ class LoginView(APIView):
 
 
 class SongView(APIView):
-    def play(request):
-     return Response('fuc4')
-    def nft(request):
-        return Response('fuc4')
+    def get(self, request):
+        pass
+    """Client (Next.js / frontend)
+        ↓
+        Cloudflare Worker (TS/JS)
+        ↓
+        R2 (streaming storage)
+
+        Django (separate backend)
+        ↓
+        Postgres + auth + business logic"""
+    
 
 class LibraryView(APIView):
     # Get user object since it's foreign key in library table
