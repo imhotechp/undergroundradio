@@ -69,7 +69,7 @@ class LoginView(APIView):
             refresh_token = str(jwt) # signed tokens
             access_token = str(jwt.access_token) # signed tokens
             # after sign in api get user home page 
-            header = {"Authorization": 'Bearer {access_token}'}
+            header = {"Authorization": 'Bearer ' + access_token}
             requests.get('http://undergroundradio.us/ground/', headers=header)
             # IF JWT EXPIRE DO REFRESH CONDITION 
             print('login is successful', header)
