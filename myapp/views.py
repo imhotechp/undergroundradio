@@ -7,7 +7,7 @@ from django.contrib.auth import authenticate, get_user_model
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from myapp.jwt import test_decode
-from myapp.models import User
+from myapp.models import User, Library
 
 # this will be ground (homepage)
 # homepage, library, music streaming part
@@ -15,7 +15,10 @@ class HomeView(APIView):
     permission_classes = [AllowAny]
     # GET LIST of songs per user (library)
     def get(self, request):
-        print(request.user)
+        user = request.user
+        songs = Library.objects.all()
+        print(songs)
+
         # jwt to pass to library?
         jwt = request.headers.get('authorization').split(" ")[1]
 
