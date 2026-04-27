@@ -25,8 +25,8 @@ class HomeView(APIView):
                 library.append(s)
                 # ARRAY OF ACTUAL SONG OBJECTS FROM DJANGO MODEL
                 for song_objects in library:
-                    tracklist.append(song_objects.song)
-                print(library, tracklist)
+                    print(song_objects)
+                print(library)
 
         # jwt to pass to library?
         jwt = request.headers.get('authorization').split(" ")[1]
