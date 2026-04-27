@@ -25,7 +25,7 @@ class HomeView(APIView):
                 library.append(songs)
                 for s in library:
                     tracklist.append(s.song)
-                print(library, tracklist)
+                print(library, type(tracklist))
 
         # jwt to pass to library?
         jwt = request.headers.get('authorization').split(" ")[1]
