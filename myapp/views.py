@@ -9,6 +9,7 @@ import requests
 from myapp.jwt import test_decode
 from myapp.models import User, Library
 
+
 # this will be ground (homepage)
 # homepage, library, music streaming part
 class HomeView(APIView):
@@ -25,7 +26,7 @@ class HomeView(APIView):
                 library.append(songs)
                 for s in library:
                     tracklist.append(s.song)
-                print(library,tracklist.count())
+                print(library, len(tracklist))
 
         # jwt to pass to library?
         jwt = request.headers.get('authorization').split(" ")[1]
