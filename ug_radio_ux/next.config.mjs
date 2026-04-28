@@ -4,4 +4,8 @@ const nextConfig = {
   reactCompiler: true,
 };
 
+module.exports = {
+  allowedDevOrigins: ['72.61.75.183'],
+}
+
 export default nextConfig;
