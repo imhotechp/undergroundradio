@@ -16,8 +16,11 @@ export const metadata = {
   description: "STREAM YOUR JUUGS TODAY",
 };
 
-// WE WANT A FLOATING NAV BAR WITH HOME TAB/ LIBRARY TAB WITH
-// UGR BACKGROUND 
+// WE WANT A FLOATING NAV BAR WITH 
+// HOME TAB/ LIBRARY TAB // music playing tab
+//  WITH UGR BACKGROUND 
+
+// ability to change theme here
 
 export default function RootLayout({ children }) {
   return (
@@ -25,7 +28,21 @@ export default function RootLayout({ children }) {
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <BackgroundText>
+        {children}
+        </BackgroundText>
+        </body>
     </html>
   );
+}
+
+// ugr svgs 
+function BackgroundText(){
+  return (
+    <>
+    <svg path d="M182.416,1854.39q-32.559-40.68-67.546-101.72a1.222,1.222,0,0,0-.407-0.82q-15.058-26.025-17.9-26.04c-1.361.28-3.662,2.44-6.917,6.51a92.939,92.939,0,0,0-10.579,16.28q-3.252,6.915-3.662,8.95c0,0.81.814,2.58,2.442,5.29l13.428,22.38q6.5,10.98,14.241,24.01,39.873,64.695,61.442,86.26,6.5,6.51,12.614,6.92,5.694,0,11.394-6.51a41.536,41.536,0,0,0,2.848-3.26q17.09-21.555,26.448-54.52c1.895-7.33,3.389-11.12,4.476-11.4l0.407,0.41a6.856,6.856,0,0,1,.814,1.02c0.267,0.4.61,0.88,1.017,1.42a7.252,7.252,0,0,1,1.018,2.04,18.6,18.6,0,0,0,1.017,2.44c0.407,0.81.877,1.7,1.424,2.64a12.4,12.4,0,0,1,1.221,3.05q6.5,15.06,21.565,40.69,26.856,45.165,30.925,45.17,1.221-.4,5.7-5.7,15.87-18.3,15.87-25.22-0.411-3.675-8.952-16.69-7.734-10.575-15.056-22.38-38.661-61.425-47.2-111.49-1.63,1.635-4.069,4.48-18.31,21.975-18.311,38.65,0,6.93-3.255,26.05-9.364,52.89-14.648,52.89-2.442-.39-11.8-11.8h0Zm113.525,94.4,4.883-6.1a81.294,81.294,0,0,0,10.579-16.68l5.29-10.58-4.476-13.02-5.7,10.58q-5.7,11.385-10.172,16.68l-4.883,6.1Z"></svg>
+    </>
+  )
+
 }
