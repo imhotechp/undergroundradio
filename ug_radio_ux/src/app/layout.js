@@ -45,7 +45,7 @@ function BackgroundText(){
   return (
   <>
     <svg viewBox="0 0 3000 3000" xmlns="http://www.w3.org/2000/svg">
-     {darkModeSVG.map((d, i) => (
+     {lightModeSVG.map((d, i) => (
       <path key={i} d={d} />
     ))}
     </svg>
