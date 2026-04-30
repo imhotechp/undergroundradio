@@ -39,7 +39,7 @@ export default function RootLayout({ children }) {
 
 // ugr svgs 
 function BackgroundText(){
-  const SVG = createModeSVG() // lightMode
+  const SVG = createSVG() 
   return (
   <>
     <svg viewBox="0 0 3000 3000" xmlns="http://www.w3.org/2000/svg">
