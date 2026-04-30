@@ -59,7 +59,7 @@ function BackgroundText(){
   const svg_text = [u,n,d,e,r,g,r2,o,u2,n2,d2,r3,a,d3,i,o2]
   return (
   <>
-    <svg viewBox="0 0 3000 2000" xmlns="http://www.w3.org/2000/svg">    
+    <svg viewBox="0 0 3000 3000" xmlns="http://www.w3.org/2000/svg">    
      {svg_text.map((d, i) => (
       <path key={i} d={d} />
     ))}
