@@ -1,6 +1,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import {createLightModeSVG, createDarkModeSVG} from "./svg.js";
+import {createSVG} from "./svg.js";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -39,13 +39,11 @@ export default function RootLayout({ children }) {
 
 // ugr svgs 
 function BackgroundText(){
-  const lightModeSVG = createLightModeSVG() // lightMode
-  const darkModeSVG = createDarkModeSVG() // lightMode
-
+  const SVG = createModeSVG() // lightMode
   return (
   <>
     <svg viewBox="0 0 3000 3000" xmlns="http://www.w3.org/2000/svg">
-     {lightModeSVG.map((d, i) => (
+     {SVG.map((d, i) => (
       <path key={i} d={d} />
     ))}
     </svg>
