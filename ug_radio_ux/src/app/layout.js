@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import {createSVG} from "./svg.js";
+import motion from motion;
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -42,11 +43,13 @@ function BackgroundText(){
   const SVG = createSVG() 
   return (
   <>
-    <svg viewBox="-500 1000 3000 1200" xmlns="http://www.w3.org/2000/svg">
-     {SVG.map((d, i) => (
-      <path key={i} d={d} />
+  <motion.svg
+  viewBox="-500 1000 3000 1200"
+  animate={{ viewBox: "100 0 200 200" }}>
+    {SVG.map((d, i) => (
+      <motion.path key={i} d={d} />
     ))}
-    </svg>
+  </motion.svg>
   </>
   )
 }
