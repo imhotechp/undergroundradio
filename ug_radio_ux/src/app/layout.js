@@ -1,7 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import {createSVG} from "./svg.js";
-import motion from 'framer-motion';
+import {motion} from 'framer-motion';
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
