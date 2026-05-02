@@ -2,7 +2,7 @@ import {createSVG} from "./svg.js";
 import {motion} from 'framer-motion';
 
 "use client"
-function BackgroundText(){
+export default function BackgroundText(){
   const SVG = createSVG() 
   return (
   <>
