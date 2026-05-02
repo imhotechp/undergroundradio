@@ -39,6 +39,7 @@ export default function RootLayout({ children }) {
 }
 
 // ugr svgs 
+"use client"
 function BackgroundText(){
   const SVG = createSVG() 
   return (
