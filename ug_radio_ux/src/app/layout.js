@@ -1,6 +1,7 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import BackgroundText from "./home-animation"
+import BackgroundText from "./home-animation";
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
