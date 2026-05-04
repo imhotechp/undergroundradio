@@ -9,7 +9,7 @@ export default function BackgroundText(){
   <>
   <motion.svg  className="full-screen-svg" viewBox="-500 1000 3000 1200">
     {SVG.map((d, i) => (
-      <motion.path key={i} d={d} animate={{d: d, fill:'white'}}/>
+      <motion.path key={i} d={d} initial={{filter: none}} animate={{d: d, fill:'white', filter: "blur(10px)"}}/>
     ))}
   </motion.svg>
   </>
