@@ -7,7 +7,7 @@ export default function BackgroundText(){
 
   const SVG = createSVG() 
   return (
-  <svg className="full-screen-svg -z-50" viewBox="0 0 2000 2000">
+  <svg className="full-screen-svg" viewBox="0 0 2000 2000">
     <g>
     {SVG.map((d, i) => (
       <path 

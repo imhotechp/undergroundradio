@@ -1,6 +1,7 @@
 @import "tailwindcss";
 
 :root {
+  --background: #171717;
   --foreground: #171717;
 }
 
@@ -26,6 +27,6 @@ body {
 
 .full-screen-svg {
     width: 100vw;
-    height: 100vh;
+    height: 100dvh;
     display: block;
   }
