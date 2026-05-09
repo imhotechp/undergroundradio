@@ -1,13 +1,9 @@
 "use client"
 import {createSVG} from "./svg.js";
-import { useRef} from 'react';
-import {gsap} from 'gsap';
-import { DrawSVGPlugin } from "gsap/all";
 
 
 export default function BackgroundText(){
 
-  gsap.registerPlugin(DrawSVGPlugin);
 
   const SVG = createSVG() 
   return (
