@@ -7,7 +7,7 @@ export default function BackgroundText(){
 
   const SVG = createSVG() 
   return (
-  <svg className="full-screen-svg" viewBox="0 0 2000 2000">
+  <svg className="full-screen-svg" viewBox="0 0 2200 2200">
     <g>
     {SVG.map((d, i) => (
       <path 
@@ -33,7 +33,7 @@ export default function BackgroundText(){
     cx='50' 
     cy='850'
     fill="url(#spraypaint-spray"
-    filter= "blur(7px)"
+    filter= "blur(30px)"
     className="z-50"
     ></circle>
     </svg>
