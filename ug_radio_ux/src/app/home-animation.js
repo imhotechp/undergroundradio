@@ -29,7 +29,7 @@ export default function BackgroundText(){
     </svg>
     <svg>
     <circle 
-    r='20' 
+    r='30' 
     cx='50' 
     cy='850'
     fill="url(#spraypaint-spray"
