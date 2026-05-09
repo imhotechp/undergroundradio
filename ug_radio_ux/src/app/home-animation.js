@@ -33,7 +33,7 @@ export default function BackgroundText(){
     cx='50' 
     cy='850'
     fill="url(#spraypaint-spray"
-    filter= "blur(30px)"
+    filter= "blur(200px)"
     className="z-50"
     ></circle>
     </svg>
