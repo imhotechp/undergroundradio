@@ -1,6 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import {BackgroundText, ObjectSpace} from "./home-animation";
 import {NavBar} from "./components/components";
 
 export const metadata = {
