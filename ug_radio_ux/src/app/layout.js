@@ -19,7 +19,7 @@ export default function RootLayout({ children }) {
     <html lang="en">
         <body className="relative min-h-dvh">
           <div className='pointer-events-none'>
-            <BackgroundText/>
+          {/* ADD BACKGROUND COMPONENT HERE */}
             </div>
             <div>
               <NavBar/>
