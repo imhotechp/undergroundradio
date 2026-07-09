@@ -643,8 +643,8 @@ export const UndergroundRadioSpray = forwardRef<
 
     const load = async () => {
       const prepared = await Promise.all(
-        UNDERGROUND_RADIO_LETTERS.map(({ char, svg }) =>
-          prepareLetter(char, svg, BASE_LETTER_HEIGHT, "#ffffff"),
+        UNDERGROUND_RADIO_LETTERS.map(({ char, path }) =>
+          prepareLetter(char, path, BASE_LETTER_HEIGHT, "#ffffff"),
         ),
       );
       if (cancelled) return;

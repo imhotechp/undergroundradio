@@ -6,7 +6,6 @@ export function NavBar(){
                 <li><a href='/library'>LIBRARY</a></li>
                 <li><a href='/home'>HOME</a></li>
                 <li><a>ACCOUNT</a></li>
-                
             </ul>
             </nav>
     )
