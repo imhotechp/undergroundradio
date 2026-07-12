@@ -149,9 +149,18 @@ export function SprayCanMotion3D({
     };
   }, [spraying]);
 
+  const tiltX = spraying ? -10 : 6;
+  const tiltY = spraying ? -34 : -14;
+  const tiltZ = spraying ? -7 : 0;
+
   return (
     <div ref={rootRef} style={{ perspective: 900, transformStyle: "preserve-3d" }}>
-      <div style={{ rotateX: spraying ? -10 : 6, rotateY: spraying ? -34 : -14, rotateZ: spraying ? -7 : 0, transformStyle: "preserve-3d" }}>
+      <div
+        style={{
+          transform: `rotateX(${tiltX}deg) rotateY(${tiltY}deg) rotateZ(${tiltZ}deg)`,
+          transformStyle: "preserve-3d",
+        }}
+      >
         <div
           className="absolute left-1/2 rounded-full bg-black/50 blur-md"
           style={{
