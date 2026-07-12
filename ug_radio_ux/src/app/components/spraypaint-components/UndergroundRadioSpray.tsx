@@ -643,9 +643,15 @@ export const UndergroundRadioSpray = forwardRef<
 
     const load = async () => {
       const prepared = await Promise.all(
-        UNDERGROUND_RADIO_LETTERS.map(({ char, path }) =>
-          prepareLetter(char, path, BASE_LETTER_HEIGHT, "#ffffff"),
-        ),
+        UNDERGROUND_RADIO_LETTERS.map(async ({ char, path }) => {
+          const response = await fetch(path);
+          if (!response.ok) {
+            throw new Error(`Failed to load SVG asset: ${path}`);
+          }
+
+          const svg = await response.text();
+          return prepareLetter(char, svg, BASE_LETTER_HEIGHT, "#ffffff");
+        }),
       );
       if (cancelled) return;
 
