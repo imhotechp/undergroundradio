@@ -53,8 +53,9 @@ export interface UndergroundRadioSprayHandle {
   exportPng: () => void;
 }
 
-const SHAKE_MS_DEFAULT = 900;
-const LETTER_MS_DEFAULT = 1400;
+/** Shake + 16 letters ≈ 2s at speed 1× (160 + 16×115). */
+const SHAKE_MS_DEFAULT = 160;
+const LETTER_MS_DEFAULT = 115;
 /** Oversampled source raster so completed letters stay crisp on large/retina canvases. */
 const BASE_LETTER_HEIGHT = 960;
 const UNDERGROUND_BREAK = 11;
