@@ -1,0 +1,18 @@
+[Unit]
+Description=undergroundradio Next.js frontend
+After=network.target
+
+[Service]
+Type=simple
+# EDIT: point this at the real clone path on the server.
+WorkingDirectory=/opt/undergroundradio/undergroundradio/ug_radio_ux
+# Requires `npm ci && npm run build` to have been run first (see deploy/README.md) —
+# .env.production (NEXT_PUBLIC_API_BASE_URL=/api) is picked up automatically by that build.
+ExecStart=/usr/bin/npm run start -- -p 3000
+Environment=NODE_ENV=production
+
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target

@@ -30,16 +30,20 @@ SIMPLE_JWT = {
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure--00vaxs5nwhlgov1x09&-z7=c6e3h@2l6oit(*unsxix5=o+4-'
+# SECURITY WARNING: keep the secret key used in production secret! In production,
+# set DJANGO_SECRET_KEY as a real env var (e.g. in the systemd unit) — do NOT put
+# it in the tracked .env file. This fallback is fine for local dev only.
+SECRET_KEY = getenv('DJANGO_SECRET_KEY', 'django-insecure--00vaxs5nwhlgov1x09&-z7=c6e3h@2l6oit(*unsxix5=o+4-')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+# Defaults to True to preserve local dev behavior; production sets DJANGO_DEBUG=False.
+DEBUG = getenv('DJANGO_DEBUG', 'True') == 'True'
 
 ALLOWED_HOSTS = [
     '127.0.0.1',
     '72.61.75.183',
-    'undergroundradio.us'
+    'undergroundradio.us',
+    'www.undergroundradio.us',
 ]
 
 

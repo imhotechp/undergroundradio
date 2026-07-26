@@ -32,6 +32,8 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# .env.production only holds a public relative API path, no secrets — safe to track.
+!.env.production
 
 # vercel
 .vercel

@@ -1,0 +1,25 @@
+[Unit]
+Description=undergroundradio Django backend (uvicorn/asgi)
+After=network.target
+
+[Service]
+Type=simple
+# EDIT: point these at the real clone + venv paths on the server.
+WorkingDirectory=/opt/undergroundradio/undergroundradio
+ExecStart=/opt/undergroundradio/venv/bin/uvicorn ug_radio_django.asgi:application --host 127.0.0.1 --port 8000
+
+# NEON_* DB credentials are already read from the tracked ug_radio_django/.env
+# file via python-dotenv — no need to duplicate them here. JWT key paths default
+# to /srv/mp3private.key and /srv/mp3public.key already, matching this server.
+#
+# DEBUG and SECRET_KEY, on the other hand, must NOT live in that tracked .env —
+# set the real values here instead:
+Environment=DJANGO_DEBUG=False
+# EDIT: generate a real secret, e.g. `python -c "import secrets; print(secrets.token_urlsafe(50))"`
+Environment=DJANGO_SECRET_KEY=REPLACE_WITH_A_REAL_SECRET_NEVER_COMMITTED
+
+Restart=always
+RestartSec=3
+
+[Install]
+WantedBy=multi-user.target
