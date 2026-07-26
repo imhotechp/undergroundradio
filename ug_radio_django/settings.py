@@ -16,8 +16,9 @@ from datetime import timedelta
 load_dotenv()  # loads .env
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
-P_DIR = Path('/srv/mp3private.key')
-PUB_DIR = Path('/srv/mp3public.key')
+# Overridable for local dev, where /srv/... won't exist. Defaults preserve prod behavior.
+P_DIR = Path(getenv('JWT_PRIVATE_KEY_PATH', '/srv/mp3private.key'))
+PUB_DIR = Path(getenv('JWT_PUBLIC_KEY_PATH', '/srv/mp3public.key'))
 SIMPLE_JWT = {
     "ALGORITHM": "RS256",
     "SIGNING_KEY": P_DIR.read_text(),
@@ -54,16 +55,25 @@ INSTALLED_APPS = [
     'myapp.apps.MyappConfig',
     'rest_framework',
     'django_extensions',
-] 
+    'corsheaders',
+]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+]
+
+# Frontend is a separate Next.js origin; auth uses Bearer tokens (not cookies),
+# so no CORS_ALLOW_CREDENTIALS is needed.
+CORS_ALLOWED_ORIGINS = [
+    'http://localhost:3000',
+    'http://127.0.0.1:3000',
 ]
 
 REST_FRAMEWORK = {
@@ -96,20 +106,33 @@ TEMPLATES = [
 WSGI_APPLICATION = 'ug_radio_django.wsgi.application'
 
 
-# Database - Neon postgres
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql',
-        'NAME': getenv('NEON_DB'),
-        'USER': getenv('NEON_USER'),
-        'PASSWORD': getenv('NEON_PASS'),
-        'HOST': getenv('NEON_HOST'),
-        'PORT': getenv('NEON_PORT', 5432),
-        'OPTIONS': {
-            'sslmode': 'require',
-        },
+# Database - Neon postgres in prod. Falls back to local SQLite when NEON_HOST
+# isn't set (e.g. local dev without real Neon credentials); prod is unaffected
+# since it always sets NEON_HOST.
+if getenv('NEON_HOST'):
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': getenv('NEON_DB'),
+            'USER': getenv('NEON_USER'),
+            'PASSWORD': getenv('NEON_PASS'),
+            'HOST': getenv('NEON_HOST'),
+            'PORT': getenv('NEON_PORT', 5432),
+            'OPTIONS': {
+                'sslmode': 'require',
+            },
+        }
     }
-}
+else:
+    # Deliberately not the tracked db.sqlite3 at the repo root — that file has
+    # stale/inconsistent migration history baked in from an earlier run. This is
+    # a fresh, gitignored dev-only database.
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'dev.sqlite3',
+        }
+    }
 
 AUTH_USER_MODEL = "myapp.User"
 

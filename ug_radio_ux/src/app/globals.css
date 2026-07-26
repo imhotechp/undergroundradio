@@ -3,6 +3,13 @@
 :root {
   --background: #171717;
   --foreground: #171717;
+
+  /* Universal color swatch defaults (Midnight) — overridden client-side by
+     ThemeInit/applyTheme once the persisted swatch loads. */
+  --theme-bg: #000000;
+  --theme-fg: #ffffff;
+  --theme-nav-bg: #0a0a0a;
+  --theme-accent: #fc3c44;
 }
 
 @theme inline {

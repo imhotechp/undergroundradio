@@ -1,7 +1,7 @@
 import jwt
-# local: /Users/colby/.ssh/id_rsa_pub.pem
-with open("/srv/mp3public.key") as f:
-    public_key = f.read()
+from django.conf import settings
+
+public_key = settings.SIMPLE_JWT["VERIFYING_KEY"]
 
 #  USE THIS IN MP3JUUG 
 def test_decode(token):

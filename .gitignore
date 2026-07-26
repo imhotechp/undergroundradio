@@ -1,0 +1,8 @@
+# Local-only dev JWT keypair (generated per-machine, never real prod keys)
+keys/
+dev.sqlite3
+
+# Python
+__pycache__/
+*.pyc
+venv/
