@@ -3,10 +3,26 @@ from rest_framework.views import APIView
 from myapp.serializers import AccountSerializer, SongSerializer, LibrarySerializer
 from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 import requests
 from myapp.models import Library, Song
+
+
+def notify_mp3juug(token, username, email, access_token):
+    """Tells mp3juug.com a signup/login just completed so it can deliver the song
+    the token references to this user's account. Best-effort: a slow or unreachable
+    mp3juug.com must never block or break the caller's own signup/login response."""
+    try:
+        requests.get(
+            'https://mp3juug.com/musicv2',
+            headers={"Authorization": "Bearer " + access_token},
+            params={'token': token, 'username': username, 'email': email},
+            timeout=5,
+        )
+    except requests.RequestException as e:
+        print('notify_mp3juug failed:', e, flush=True)
 
 
 # this will be ground (homepage)
@@ -54,43 +70,41 @@ class MeView(APIView):
             "phone_number": user.phone_number,
         })
 
-# create user + logins + add song(s) to library
+# Create an account. This is the entry point for links like
+# /musicv2?token=... from mp3juug.com — the token references a song that
+# should be delivered to whoever completes signup through that link.
 class AccountView(APIView):
     permission_classes = [AllowAny]
 
     def post(self, request):
-        # CREATE ACCOUNT
         token = request.query_params.get('token')
         serializer = AccountSerializer(data=request.data)
-        username = request.data.get('username')
-        if serializer.is_valid():
+        if not serializer.is_valid():
+            message = next(iter(serializer.errors.values()))[0]
+            return Response({'error': str(message)}, status=400)
+
+        try:
             user = serializer.save()
-            # LOGIN
-            user = authenticate(
-            request=request,
-            username=request.data.get('username'),
-            password=request.data.get('password')
-        )
-            if not user:
-                return Response(serializer.errors, status=400)
-            if not user.is_active:
-                return Response(serializer.errors, status=400)
-            jwt = RefreshToken.for_user(user)
-            refresh_token = str(jwt) # signed tokens
-            access_token = str(jwt.access_token) # signed tokens
-            # GET METADATA SENT TO /ADD endpoint retreive and return resource here
-            payload = {'token': token, 'username': username, 'email': request.data.get('email')}
-            headers= {"Authorization": "Bearer " + access_token}
-            r = requests.get('https://mp3juug.com/musicv2', headers=headers, params=payload)
-            return Response({"success": "songs should be adding", "status":r.status_code})
-        return Response(serializer.errors, status=400)
+        except IntegrityError:
+            return Response({'error': 'That username is already taken.'}, status=400)
+        jwt = RefreshToken.for_user(user)
+        refresh_token = str(jwt)
+        access_token = str(jwt.access_token)
+
+        if token:
+            notify_mp3juug(token, user.username, user.email, access_token)
+
+        return Response({"access": access_token, "refresh": refresh_token})
     
-# Login
+# Login. Also doubles as the /musicv2?token=... entry point for a returning
+# user — same as AccountView, if a token is present the song it references
+# gets attached via the mp3juug.com notification below.
 class LoginView(APIView):
     permission_classes = [AllowAny]
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
+        token = request.query_params.get('token')
         user = authenticate(username=username, password=password)
         if not user:
             return Response({'error': 'Invalid credentials'}, status=401)
@@ -99,6 +113,10 @@ class LoginView(APIView):
         jwt = RefreshToken.for_user(user)
         refresh_token = str(jwt)
         access_token = str(jwt.access_token)
+
+        if token:
+            notify_mp3juug(token, user.username, user.email, access_token)
+
         return Response({"access": access_token, "refresh": refresh_token})
 
 

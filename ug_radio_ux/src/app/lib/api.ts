@@ -59,8 +59,9 @@ async function apiFetch(path: string, options: RequestInit = {}) {
   return response.json();
 }
 
-export async function login(username: string, password: string) {
-  const response = await fetch(`${API_BASE_URL}/login/`, {
+export async function login(username: string, password: string, token?: string) {
+  const query = token ? `?token=${encodeURIComponent(token)}` : "";
+  const response = await fetch(`${API_BASE_URL}/login/${query}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, password }),
@@ -68,6 +69,32 @@ export async function login(username: string, password: string) {
   const body = await response.json().catch(() => null);
   if (!response.ok) {
     throw new ApiError(response.status, body?.error ?? "Login failed.");
+  }
+  setTokens(body.access, body.refresh);
+  return body;
+}
+
+export async function signup(
+  username: string,
+  password: string,
+  email: string,
+  phoneNumber: string,
+  token?: string,
+) {
+  const query = token ? `?token=${encodeURIComponent(token)}` : "";
+  const response = await fetch(`${API_BASE_URL}/musicv2/${query}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      username,
+      password,
+      email,
+      phone_number: phoneNumber,
+    }),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new ApiError(response.status, body?.error ?? "Signup failed.");
   }
   setTokens(body.access, body.refresh);
   return body;
