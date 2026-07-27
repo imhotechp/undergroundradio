@@ -15,11 +15,16 @@ def notify_mp3juug(token, username, email, access_token):
     the token references to this user's account. Best-effort: a slow or unreachable
     mp3juug.com must never block or break the caller's own signup/login response."""
     try:
-        requests.get(
+        response = requests.get(
             'https://mp3juug.com/musicv2',
             headers={"Authorization": "Bearer " + access_token},
             params={'token': token, 'username': username, 'email': email},
             timeout=5,
+        )
+        print(
+            'notify_mp3juug: token=%r username=%r status=%s body=%r'
+            % (token, username, response.status_code, response.text[:500]),
+            flush=True,
         )
     except requests.RequestException as e:
         print('notify_mp3juug failed:', e, flush=True)
