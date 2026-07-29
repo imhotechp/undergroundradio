@@ -9,7 +9,7 @@ class Song(models.Model):
     producer = models.CharField(null=True, blank=True)
     lyrics = models.CharField(null=True, blank=True)
     duration = models.DurationField(null=True, blank=True)
-    coverArt = models.CharField()
+    coverArt = models.CharField(blank=True)
     plays = models.IntegerField(null=True, blank=True)
     nft_status = models.BooleanField(null=True, blank=True)
 class User(AbstractUser):
@@ -20,4 +20,4 @@ class Library(models.Model):
     username = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, to_field='username')
     name = models.CharField(default='Playlist001')
     song = models.ManyToManyField(Song)
-    coverArt = models.CharField()
+    coverArt = models.CharField(blank=True)

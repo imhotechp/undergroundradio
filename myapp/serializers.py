@@ -72,7 +72,7 @@ class SongSerializer(serializers.ModelSerializer):
     producer = serializers.CharField(required=False)
     lyrics = serializers.CharField(required=False)
     duration = serializers.DurationField(required=False)
-    coverArt = serializers.CharField(required=True, min_length=1)
+    coverArt = serializers.CharField(required=False, allow_blank=True, default='')
     plays = serializers.IntegerField(required=False)
     nft_status = serializers.BooleanField(default=False)
     
