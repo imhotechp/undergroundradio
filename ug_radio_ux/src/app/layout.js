@@ -2,6 +2,8 @@ import "./globals.css";
 import { NavBar } from "./components/components";
 import { SprayBackground } from "./components/SprayBackground";
 import { ThemeInit } from "./components/ThemeInit";
+import { PlayerProvider } from "./lib/player-context";
+import { NowPlayingBar } from "./components/library-components/NowPlayingBar";
 
 export const metadata = {
   title: "UNDERGROUNDRADIO",
@@ -20,10 +22,13 @@ export default function RootLayout({ children }) {
         <div className="pointer-events-none fixed inset-0 z-0">
           <SprayBackground />
         </div>
-        <div className="relative z-10">
-          <NavBar />
-          {children}
-        </div>
+        <PlayerProvider>
+          <div className="relative z-10">
+            <NavBar />
+            {children}
+            <NowPlayingBar />
+          </div>
+        </PlayerProvider>
       </body>
     </html>
   );

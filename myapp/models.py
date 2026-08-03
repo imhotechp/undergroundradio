@@ -10,6 +10,7 @@ class Song(models.Model):
     lyrics = models.CharField(null=True, blank=True)
     duration = models.DurationField(null=True, blank=True)
     coverArt = models.CharField(blank=True)
+    url = models.CharField(blank=True)  # playable stream URL (R2 via the public Worker)
     plays = models.IntegerField(null=True, blank=True)
     nft_status = models.BooleanField(null=True, blank=True)
 class User(AbstractUser):

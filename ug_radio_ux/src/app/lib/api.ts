@@ -6,6 +6,7 @@ export interface Track {
   song: string;
   artist_name: string;
   coverArt?: string;
+  url?: string;
   producer?: string;
   lyrics?: string;
   duration?: string | null;

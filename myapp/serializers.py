@@ -73,9 +73,10 @@ class SongSerializer(serializers.ModelSerializer):
     lyrics = serializers.CharField(required=False)
     duration = serializers.DurationField(required=False)
     coverArt = serializers.CharField(required=False, allow_blank=True, default='')
+    url = serializers.CharField(required=False, allow_blank=True, default='')
     plays = serializers.IntegerField(required=False)
     nft_status = serializers.BooleanField(default=False)
-    
+
     class Meta:
         model = Song
         fields = (
@@ -83,6 +84,7 @@ class SongSerializer(serializers.ModelSerializer):
             'artist_name',
             'email',
             'coverArt',
+            'url',
             'producer',
             'lyrics',
             'duration',

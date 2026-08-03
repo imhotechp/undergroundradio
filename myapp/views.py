@@ -156,12 +156,14 @@ class LibraryView(APIView):
     # library being modified is always the caller's own, never a client-supplied one.
     def post(self, request):
         songs = request.data.get('song')
+        urls = request.data.get('url') or []
         results = []
         # Save each song individually since request song param is []
-        for song_value in songs:
+        for i, song_value in enumerate(songs):
             # copy reuqest.data since immutable & set one value at a time
             data = request.data.copy()
             data['song'] = song_value
+            data['url'] = urls[i] if i < len(urls) else ''
 
             # reuse an existing identical Song instead of creating a duplicate
             # row — e.g. a link opened twice, or the same song forwarded via
