@@ -34,6 +34,15 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const playQueue = useCallback((tracks: Track[], startIndex: number) => {
     setQueue(tracks);
     setCurrentIndex(startIndex);
+    // set src + play synchronously, inside the same call stack as the click
+    // that triggered this — iOS Safari's autoplay policy silently blocks
+    // play() if it happens later, e.g. from a useEffect reacting to state
+    const audio = audioRef.current;
+    const track = tracks[startIndex];
+    if (audio && track?.url) {
+      audio.src = track.url;
+      audio.play().catch(() => {});
+    }
   }, []);
 
   const togglePlay = useCallback(() => {
@@ -55,10 +64,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (audioRef.current) audioRef.current.currentTime = time;
   }, []);
 
-  // load + play whenever the selected track changes
+  // load + play whenever the selected track changes (covers playNext/playPrevious/
+  // ended-auto-advance; the initial click is also handled synchronously in
+  // playQueue above for autoplay-gesture purposes — guard here avoids reloading
+  // the same src twice when this fires right after that direct call)
   useEffect(() => {
     const audio = audioRef.current;
     if (!audio || !currentTrack?.url) return;
+    if (audio.src === currentTrack.url) return;
     audio.src = currentTrack.url;
     audio.play().catch(() => {});
   }, [currentTrack?.url]);
@@ -72,15 +85,18 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     const onTimeUpdate = () => setCurrentTime(audio.currentTime);
     const onLoadedMetadata = () => setDuration(audio.duration || 0);
     const onEnded = () => playNext();
+    const onError = () => console.error("Playback error for", audio.src, audio.error);
     audio.addEventListener("play", onPlay);
     audio.addEventListener("pause", onPause);
     audio.addEventListener("timeupdate", onTimeUpdate);
     audio.addEventListener("loadedmetadata", onLoadedMetadata);
     audio.addEventListener("ended", onEnded);
+    audio.addEventListener("error", onError);
     return () => {
       audio.removeEventListener("play", onPlay);
       audio.removeEventListener("pause", onPause);
       audio.removeEventListener("timeupdate", onTimeUpdate);
+      audio.removeEventListener("error", onError);
       audio.removeEventListener("loadedmetadata", onLoadedMetadata);
       audio.removeEventListener("ended", onEnded);
     };
