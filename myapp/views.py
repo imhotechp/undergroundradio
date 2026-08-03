@@ -163,15 +163,35 @@ class LibraryView(APIView):
             data = request.data.copy()
             data['song'] = song_value
 
-            song_serializer = SongSerializer(data=data)
-            if song_serializer.is_valid():
-                # save song(s) to song table
-                obj = song_serializer.save()
-                # Since song objects are saved to library we save pks
-                results.append(obj.pk)
+            # reuse an existing identical Song instead of creating a duplicate
+            # row — e.g. a link opened twice, or the same song forwarded via
+            # two different links, shouldn't fork into two Song records
+            existing_song = Song.objects.filter(
+                song=song_value,
+                artist_name=data.get('artist_name'),
+                email=data.get('email'),
+            ).first()
+            if existing_song:
+                obj_pk = existing_song.pk
             else:
-                print('errors:', song_serializer.errors, flush=True)
-                return Response(song_serializer.errors, status=400)
+                song_serializer = SongSerializer(data=data)
+                if song_serializer.is_valid():
+                    # save song(s) to song table
+                    obj = song_serializer.save()
+                    obj_pk = obj.pk
+                else:
+                    print('errors:', song_serializer.errors, flush=True)
+                    return Response(song_serializer.errors, status=400)
+
+            # skip songs this user already has anywhere in their library —
+            # re-redeeming the same link shouldn't duplicate the entry
+            if Library.objects.filter(username=request.user, song__pk=obj_pk).exists():
+                continue
+            results.append(obj_pk)
+
+        if not results:
+            return Response({"song(s)": "already in library"})
+
         # same thing for library..
         data = request.data.copy()
         data['song'] = results
