@@ -1,0 +1,16 @@
+# Deploy: from this directory, `npx wrangler deploy`
+# Or via the Cloudflare dashboard's Git integration, with this directory set
+# as the project's Root directory.
+#
+# After first deploy, the public URL is:
+#   https://mp3juug-r2-public.<your-account-subdomain>.workers.dev
+# (find <your-account-subdomain> under Workers & Pages > your account settings,
+# or just copy the URL Cloudflare shows after deploying)
+
+name = "mp3juug-r2-public"
+main = "src/worker.js"
+compatibility_date = "2026-01-01"
+
+[[r2_buckets]]
+binding = "BUCKET"
+bucket_name = "emerald"
