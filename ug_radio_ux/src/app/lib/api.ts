@@ -1,4 +1,4 @@
-import { clearTokens, getAccessToken, setTokens } from "@/app/lib/auth";
+import { clearTokens, getAccessToken, getRefreshToken, setAccessToken, setTokens } from "@/app/lib/auth";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -40,13 +40,51 @@ export class ApiError extends Error {
   }
 }
 
-async function apiFetch(path: string, options: RequestInit = {}) {
-  const token = getAccessToken();
-  const headers = new Headers(options.headers);
-  headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+// Access tokens live 5 minutes; refresh tokens live 1 day. This dedupes
+// concurrent 401s into a single refresh call instead of firing one per
+// in-flight request.
+let refreshPromise: Promise<string> | null = null;
 
-  const response = await fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+function refreshAccessToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = (async () => {
+      const refresh = getRefreshToken();
+      if (!refresh) throw new Error("No refresh token");
+      const response = await fetch(`${API_BASE_URL}/token/refresh/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ refresh }),
+      });
+      if (!response.ok) throw new Error("Refresh failed");
+      const body = await response.json();
+      setAccessToken(body.access);
+      return body.access as string;
+    })().finally(() => {
+      refreshPromise = null;
+    });
+  }
+  return refreshPromise;
+}
+
+async function apiFetch(path: string, options: RequestInit = {}) {
+  const doFetch = (accessToken: string | null) => {
+    const headers = new Headers(options.headers);
+    headers.set("Content-Type", "application/json");
+    if (accessToken) headers.set("Authorization", `Bearer ${accessToken}`);
+    return fetch(`${API_BASE_URL}${path}`, { ...options, headers });
+  };
+
+  let response = await doFetch(getAccessToken());
+
+  if (response.status === 401) {
+    try {
+      const newAccessToken = await refreshAccessToken();
+      response = await doFetch(newAccessToken);
+    } catch {
+      clearTokens();
+      throw new ApiError(401, "Session expired. Please log in again.");
+    }
+  }
 
   if (response.status === 401) {
     clearTokens();

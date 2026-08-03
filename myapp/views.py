@@ -6,6 +6,7 @@ from django.contrib.auth import authenticate
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
 import requests
 from myapp.models import Library, Song
 
@@ -123,6 +124,14 @@ class LoginView(APIView):
             notify_mp3juug(token, user.username, user.email, access_token)
 
         return Response({"access": access_token, "refresh": refresh_token})
+
+
+# Default DRF permission is IsAuthenticated, which needs a valid access
+# token — exactly what a client refreshing an *expired* access token
+# doesn't have. AllowAny here; the refresh token itself (in the body) is
+# what actually gets validated by the base view.
+class TokenRefreshView(BaseTokenRefreshView):
+    permission_classes = [AllowAny]
 
 
 class SongView(APIView):

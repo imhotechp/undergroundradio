@@ -25,6 +25,11 @@ function MusicV2Form() {
   const [error, setError] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
+  function toggleMode() {
+    setError("");
+    setMode((m) => (m === "signup" ? "login" : "signup"));
+  }
+
   async function handleSubmit(e) {
     e.preventDefault();
     setError("");
@@ -37,7 +42,16 @@ function MusicV2Form() {
       }
       router.push("/home");
     } catch (err) {
-      setError(err.message ?? "Something went wrong.");
+      const message = err.message ?? "Something went wrong.";
+      // signup failed because this username already has an account — switch
+      // them into login mode instead of leaving them stuck on a dead-end error
+      if (mode === "signup" && message.toLowerCase().includes("already taken")) {
+        setMode("login");
+        setPassword("");
+        setError("You already have an account with that username — log in below to add this song to your library.");
+      } else {
+        setError(message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -62,9 +76,18 @@ function MusicV2Form() {
         onSubmit={handleSubmit}
         className="mx-auto w-full max-w-sm space-y-5 rounded-2xl border border-white/10 bg-[var(--theme-bg)]/70 p-6 shadow-2xl backdrop-blur-xl"
       >
-        <h1 className="text-2xl font-bold tracking-tight">
-          {mode === "signup" ? "Create your account" : "Log in"}
-        </h1>
+        <div className="flex items-start justify-between gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">
+            {mode === "signup" ? "Create your account" : "Log in"}
+          </h1>
+          <button
+            type="button"
+            onClick={toggleMode}
+            className="shrink-0 pt-1 text-right text-xs font-medium text-white/50 underline-offset-2 hover:underline"
+          >
+            {mode === "signup" ? "Already have an account? Log in" : "New here? Sign up"}
+          </button>
+        </div>
 
         <div className="space-y-1">
           <label htmlFor="username" className="text-sm text-white/60">
@@ -153,10 +176,7 @@ function MusicV2Form() {
 
         <button
           type="button"
-          onClick={() => {
-            setError("");
-            setMode((m) => (m === "signup" ? "login" : "signup"));
-          }}
+          onClick={toggleMode}
           className="w-full text-center text-sm text-white/50"
         >
           {mode === "signup"
