@@ -26,7 +26,7 @@ export function TrackRow({
         className="flex w-full items-center gap-3 py-2.5 text-left active:bg-white/5"
       >
         <div className="relative">
-          <TrackArt index={index} size={48} />
+          <TrackArt index={index} size={48} src={track.coverArt} alt={track.song} />
           {isPlaying && (
             <div className="absolute inset-0 flex items-center justify-center rounded-md bg-black/55">
               <EqualizerBars />

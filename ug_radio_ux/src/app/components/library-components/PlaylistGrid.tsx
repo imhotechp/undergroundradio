@@ -26,21 +26,32 @@ function PlaylistTile({
   subtitle,
   index,
   glyph,
+  coverArt,
 }: {
   href: string;
   name: string;
   subtitle: string;
   index: number;
   glyph: "all" | "note";
+  coverArt?: string;
 }) {
   return (
     <Link href={href} className="flex flex-col gap-2 active:opacity-70">
-      <div
-        className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
-        style={{ backgroundImage: gradientForIndex(index) }}
-      >
-        {glyph === "all" ? <PlayAllGlyph /> : <NoteGlyph />}
-      </div>
+      {coverArt ? (
+        // eslint-disable-next-line @next/next/no-img-element -- external R2 URL, not in next/image's allowed domains
+        <img
+          src={coverArt}
+          alt={name}
+          className="aspect-square w-full overflow-hidden rounded-xl object-cover"
+        />
+      ) : (
+        <div
+          className="flex aspect-square w-full items-center justify-center overflow-hidden rounded-xl"
+          style={{ backgroundImage: gradientForIndex(index) }}
+        >
+          {glyph === "all" ? <PlayAllGlyph /> : <NoteGlyph />}
+        </div>
+      )}
       <div className="min-w-0">
         <p className="truncate text-sm font-medium text-[var(--theme-fg)]">{name}</p>
         <p className="truncate text-xs text-white/40">{subtitle}</p>
@@ -68,6 +79,7 @@ export function PlaylistGrid({ playlists }: { playlists: Playlist[] }) {
           subtitle={`${playlist.song_count} ${playlist.song_count === 1 ? "Song" : "Songs"}`}
           index={index}
           glyph="note"
+          coverArt={playlist.coverArt}
         />
       ))}
     </div>

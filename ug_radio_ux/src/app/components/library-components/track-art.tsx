@@ -14,16 +14,34 @@ export function gradientForIndex(index: number): string {
   return `linear-gradient(135deg, ${from}, ${to})`;
 }
 
-/** Placeholder art tile used when a track has no real cover image. */
+/** Renders real cover art when a track has one; falls back to a gradient placeholder tile. */
 export function TrackArt({
   index,
   size = 48,
   className = "",
+  src,
+  alt = "",
 }: {
   index: number;
   size?: number;
   className?: string;
+  src?: string;
+  alt?: string;
 }) {
+  if (src) {
+    return (
+      // eslint-disable-next-line @next/next/no-img-element -- external R2 URL, not in next/image's allowed domains
+      <img
+        src={src}
+        alt={alt}
+        width={size}
+        height={size}
+        className={`shrink-0 overflow-hidden rounded-md object-cover ${className}`}
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
   return (
     <div
       className={`flex shrink-0 items-center justify-center overflow-hidden rounded-md ${className}`}

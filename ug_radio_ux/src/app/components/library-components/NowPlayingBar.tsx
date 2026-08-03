@@ -27,7 +27,7 @@ export function NowPlayingBar({
           className="fixed inset-x-2 z-40 flex items-center gap-3 rounded-xl border border-white/10 bg-white/10 px-3 py-2 backdrop-blur-xl"
           style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
         >
-          <TrackArt index={index} size={40} />
+          <TrackArt index={index} size={40} src={track.coverArt} alt={track.song} />
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium text-[var(--theme-fg)]">{track.song}</p>
             <p className="truncate text-xs text-white/50">{track.artist_name}</p>
