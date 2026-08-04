@@ -40,6 +40,14 @@ export function saveTheme(theme: ThemeColors) {
   window.localStorage.setItem(STORAGE_KEY, JSON.stringify(theme));
 }
 
+/** "#rrggbb" -> "r g b", for use inside rgb(var(--x) / alpha%). */
+function hexToRgbChannels(hex: string): string | null {
+  const match = /^#?([0-9a-f]{6})$/i.exec(hex);
+  if (!match) return null;
+  const int = parseInt(match[1], 16);
+  return `${(int >> 16) & 255} ${(int >> 8) & 255} ${int & 255}`;
+}
+
 /** Sets the CSS custom properties every themed component reads from. */
 export function applyTheme(theme: ThemeColors) {
   if (typeof document === "undefined") return;
@@ -48,4 +56,9 @@ export function applyTheme(theme: ThemeColors) {
   root.setProperty("--theme-fg", theme.fg);
   root.setProperty("--theme-nav-bg", theme.navBg);
   root.setProperty("--theme-accent", theme.accent);
+  // channel-only variant for rgb(var(--theme-bg-rgb) / alpha%) — Tailwind's
+  // bg-[var(--x)]/NN opacity modifier silently no-ops when --x is a hex
+  // string, so translucent panels need this instead of --theme-bg directly
+  const bgRgb = hexToRgbChannels(theme.bg);
+  if (bgRgb) root.setProperty("--theme-bg-rgb", bgRgb);
 }

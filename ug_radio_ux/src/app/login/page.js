@@ -29,7 +29,7 @@ export default function LoginPage() {
     <div className="flex min-h-dvh flex-col justify-center px-6 py-12 text-[var(--theme-fg)]">
       <form
         onSubmit={handleSubmit}
-        className="mx-auto w-full max-w-sm space-y-5 rounded-2xl border border-white/10 bg-[var(--theme-bg)]/70 p-6 shadow-2xl backdrop-blur-xl"
+        className="mx-auto w-full max-w-sm space-y-5 rounded-2xl border border-white/10 bg-[rgb(var(--theme-bg-rgb)/70%)] p-6 shadow-2xl backdrop-blur-xl"
       >
         <h1 className="text-2xl font-bold tracking-tight">Log in</h1>
 

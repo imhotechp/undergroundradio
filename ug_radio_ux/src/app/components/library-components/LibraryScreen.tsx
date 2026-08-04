@@ -37,7 +37,7 @@ export function LibraryScreen({
 
   return (
     <FloatingPanel>
-      <header className="shrink-0 border-b border-white/5 bg-[var(--theme-bg)]/25 px-4 pb-3 pt-5 backdrop-blur-md">
+      <header className="shrink-0 border-b border-white/5 bg-[rgb(var(--theme-bg-rgb)/25%)] px-4 pb-3 pt-5 backdrop-blur-md">
         <div className="flex items-center gap-1">
           {backHref && (
             <Link

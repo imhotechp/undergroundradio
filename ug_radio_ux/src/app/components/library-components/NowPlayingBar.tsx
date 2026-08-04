@@ -3,6 +3,7 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { TrackArt } from "@/app/components/library-components/track-art";
 import { PauseIcon, PlayIcon } from "@/app/components/library-components/icons";
+import { formatSeconds } from "@/app/components/library-components/format";
 import { usePlayer } from "@/app/lib/player-context";
 
 function hashIndex(key: string) {
@@ -37,6 +38,11 @@ export function NowPlayingBar() {
               <p className="truncate text-sm font-medium text-[var(--theme-fg)]">{currentTrack.song}</p>
               <p className="truncate text-xs text-white/50">{currentTrack.artist_name}</p>
             </div>
+            {duration > 0 && (
+              <span className="shrink-0 text-xs tabular-nums text-white/40">
+                {formatSeconds(currentTime)} / {formatSeconds(duration)}
+              </span>
+            )}
             <button
               type="button"
               onClick={togglePlay}

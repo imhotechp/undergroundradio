@@ -60,7 +60,7 @@ function MusicV2Form() {
   if (!token) {
     return (
       <div className="flex min-h-dvh flex-col items-center justify-center px-6 py-12 text-center text-[var(--theme-fg)]">
-        <div className="mx-auto w-full max-w-sm space-y-3 rounded-2xl border border-white/10 bg-[var(--theme-bg)]/70 p-6 shadow-2xl backdrop-blur-xl">
+        <div className="mx-auto w-full max-w-sm space-y-3 rounded-2xl border border-white/10 bg-[rgb(var(--theme-bg-rgb)/70%)] p-6 shadow-2xl backdrop-blur-xl">
           <h1 className="text-xl font-bold tracking-tight">Invalid link</h1>
           <p className="text-sm text-white/60">
             This link is invalid or missing its token. Ask for a new one.
@@ -74,7 +74,7 @@ function MusicV2Form() {
     <div className="flex min-h-dvh flex-col justify-center px-6 py-12 text-[var(--theme-fg)]">
       <form
         onSubmit={handleSubmit}
-        className="mx-auto w-full max-w-sm space-y-5 rounded-2xl border border-white/10 bg-[var(--theme-bg)]/70 p-6 shadow-2xl backdrop-blur-xl"
+        className="mx-auto w-full max-w-sm space-y-5 rounded-2xl border border-white/10 bg-[rgb(var(--theme-bg-rgb)/70%)] p-6 shadow-2xl backdrop-blur-xl"
       >
         <div className="flex items-start justify-between gap-3">
           <h1 className="text-2xl font-bold tracking-tight">

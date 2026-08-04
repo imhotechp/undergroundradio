@@ -113,7 +113,7 @@ export default function AccountPage() {
 
   return (
     <FloatingPanel>
-      <header className="shrink-0 border-b border-white/5 bg-[var(--theme-bg)]/25 px-4 pb-3 pt-5 backdrop-blur-md">
+      <header className="shrink-0 border-b border-white/5 bg-[rgb(var(--theme-bg-rgb)/25%)] px-4 pb-3 pt-5 backdrop-blur-md">
         <h1 className="text-3xl font-bold tracking-tight text-[var(--theme-fg)]">Account</h1>
       </header>
 

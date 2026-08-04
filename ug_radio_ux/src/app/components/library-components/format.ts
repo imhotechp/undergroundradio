@@ -14,6 +14,14 @@ export function formatDuration(duration?: string | null): string | null {
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
 }
 
+/** Raw seconds (from <audio>'s currentTime/duration) -> "M:SS". */
+export function formatSeconds(totalSeconds: number): string {
+  if (!Number.isFinite(totalSeconds) || totalSeconds < 0) return "0:00";
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = Math.floor(totalSeconds % 60);
+  return `${minutes}:${String(seconds).padStart(2, "0")}`;
+}
+
 export function formatTotalDuration(tracks: { duration?: string | null }[]): string {
   const totalSeconds = tracks.reduce(
     (sum, t) => sum + (t.duration ? parseDurationSeconds(t.duration) : 0),

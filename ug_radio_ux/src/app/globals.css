@@ -10,6 +10,10 @@
   --theme-fg: #ffffff;
   --theme-nav-bg: #0a0a0a;
   --theme-accent: #fc3c44;
+  /* channel-only variant of --theme-bg (0 0 0, not #000000) for use inside
+     rgb(var(--theme-bg-rgb) / alpha%) — Tailwind's bg-[var(--x)]/NN opacity
+     modifier silently no-ops on a hex-string variable */
+  --theme-bg-rgb: 0 0 0;
 }
 
 @theme inline {
