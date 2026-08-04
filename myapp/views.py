@@ -174,6 +174,7 @@ class LibraryView(APIView):
                 data['duration'] = duration_value
             else:
                 data.pop('duration', None)
+            print('DEBUG duration_value:', repr(duration_value), 'data duration:', repr(data.get('duration')), flush=True)
 
             # reuse an existing identical Song instead of creating a duplicate
             # row — e.g. a link opened twice, or the same song forwarded via
@@ -185,6 +186,7 @@ class LibraryView(APIView):
             ).first()
             if existing_song:
                 obj_pk = existing_song.pk
+                print('DEBUG existing_song path, pk:', obj_pk, 'existing duration:', repr(existing_song.duration), flush=True)
                 # backfill fields that were blank on the existing row (e.g. it
                 # was created before `url`/`duration` existed) with fresher
                 # incoming data
@@ -197,17 +199,21 @@ class LibraryView(APIView):
                     update_fields.append('coverArt')
                 if not existing_song.duration and data.get('duration'):
                     parsed = parse_duration(str(data['duration']))
+                    print('DEBUG backfill parse_duration:', repr(data['duration']), '->', repr(parsed), flush=True)
                     if parsed is not None:
                         existing_song.duration = parsed
                         update_fields.append('duration')
+                print('DEBUG update_fields:', update_fields, flush=True)
                 if update_fields:
                     existing_song.save(update_fields=update_fields)
             else:
+                print('DEBUG create path, incoming duration:', repr(data.get('duration')), flush=True)
                 song_serializer = SongSerializer(data=data)
                 if song_serializer.is_valid():
                     # save song(s) to song table
                     obj = song_serializer.save()
                     obj_pk = obj.pk
+                    print('DEBUG created song pk:', obj_pk, 'saved duration:', repr(obj.duration), flush=True)
                 else:
                     print('errors:', song_serializer.errors, flush=True)
                     return Response(song_serializer.errors, status=400)
