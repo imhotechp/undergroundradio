@@ -7,6 +7,7 @@ from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
+from django.utils.dateparse import parse_duration
 import requests
 from myapp.models import Library, Song
 
@@ -157,6 +158,7 @@ class LibraryView(APIView):
     def post(self, request):
         songs = request.data.get('song')
         urls = request.data.get('url') or []
+        durations = request.data.get('duration') or []
         results = []
         # Save each song individually since request song param is []
         for i, song_value in enumerate(songs):
@@ -164,6 +166,14 @@ class LibraryView(APIView):
             data = request.data.copy()
             data['song'] = song_value
             data['url'] = urls[i] if i < len(urls) else ''
+            # parse_duration('') parses as a real 0:00:00, not an error — omit
+            # the key entirely when there's no value instead of storing a fake
+            # zero duration for a song whose length just wasn't captured
+            duration_value = durations[i] if i < len(durations) else ''
+            if duration_value:
+                data['duration'] = duration_value
+            else:
+                data.pop('duration', None)
 
             # reuse an existing identical Song instead of creating a duplicate
             # row — e.g. a link opened twice, or the same song forwarded via
@@ -176,7 +186,8 @@ class LibraryView(APIView):
             if existing_song:
                 obj_pk = existing_song.pk
                 # backfill fields that were blank on the existing row (e.g. it
-                # was created before `url` existed) with fresher incoming data
+                # was created before `url`/`duration` existed) with fresher
+                # incoming data
                 update_fields = []
                 if not existing_song.url and data.get('url'):
                     existing_song.url = data['url']
@@ -184,6 +195,11 @@ class LibraryView(APIView):
                 if not existing_song.coverArt and data.get('coverArt'):
                     existing_song.coverArt = data['coverArt']
                     update_fields.append('coverArt')
+                if not existing_song.duration and data.get('duration'):
+                    parsed = parse_duration(str(data['duration']))
+                    if parsed is not None:
+                        existing_song.duration = parsed
+                        update_fields.append('duration')
                 if update_fields:
                     existing_song.save(update_fields=update_fields)
             else:
