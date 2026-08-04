@@ -39,16 +39,20 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     // play() if it happens later, e.g. from a useEffect reacting to state
     const audio = audioRef.current;
     const track = tracks[startIndex];
-    if (audio && track?.url) {
+    if (!track?.url) {
+      console.error("No url on track, nothing to play:", track);
+      return;
+    }
+    if (audio) {
       audio.src = track.url;
-      audio.play().catch(() => {});
+      audio.play().catch((err) => console.error("play() rejected:", err));
     }
   }, []);
 
   const togglePlay = useCallback(() => {
     const audio = audioRef.current;
     if (!audio) return;
-    if (audio.paused) audio.play().catch(() => {});
+    if (audio.paused) audio.play().catch((err) => console.error("play() rejected:", err));
     else audio.pause();
   }, []);
 
@@ -73,7 +77,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     if (!audio || !currentTrack?.url) return;
     if (audio.src === currentTrack.url) return;
     audio.src = currentTrack.url;
-    audio.play().catch(() => {});
+    audio.play().catch((err) => console.error("play() rejected:", err));
   }, [currentTrack?.url]);
 
   // native <audio> events -> React state
@@ -122,7 +126,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
     const audio = audioRef.current;
-    navigator.mediaSession.setActionHandler("play", () => audio?.play().catch(() => {}));
+    navigator.mediaSession.setActionHandler("play", () => audio?.play().catch((err) => console.error("play() rejected:", err)));
     navigator.mediaSession.setActionHandler("pause", () => audio?.pause());
     navigator.mediaSession.setActionHandler("previoustrack", playPrevious);
     navigator.mediaSession.setActionHandler("nexttrack", playNext);
