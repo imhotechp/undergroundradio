@@ -18,18 +18,31 @@ export const DEFAULT_THEME: ThemeColors = {
 
 const STORAGE_KEY = "undergroundradio-theme";
 
+/** Fills in any missing keys (e.g. a partial theme from the server) with defaults. */
+export function mergeTheme(partial: Partial<ThemeColors>): ThemeColors {
+  return {
+    bg: partial.bg ?? DEFAULT_THEME.bg,
+    fg: partial.fg ?? DEFAULT_THEME.fg,
+    navBg: partial.navBg ?? DEFAULT_THEME.navBg,
+    accent: partial.accent ?? DEFAULT_THEME.accent,
+  };
+}
+
+export function isDefaultTheme(theme: ThemeColors): boolean {
+  return (
+    theme.bg === DEFAULT_THEME.bg &&
+    theme.fg === DEFAULT_THEME.fg &&
+    theme.navBg === DEFAULT_THEME.navBg &&
+    theme.accent === DEFAULT_THEME.accent
+  );
+}
+
 export function loadTheme(): ThemeColors {
   if (typeof window === "undefined") return { ...DEFAULT_THEME };
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...DEFAULT_THEME };
-    const parsed = JSON.parse(raw) as Partial<ThemeColors>;
-    return {
-      bg: parsed.bg ?? DEFAULT_THEME.bg,
-      fg: parsed.fg ?? DEFAULT_THEME.fg,
-      navBg: parsed.navBg ?? DEFAULT_THEME.navBg,
-      accent: parsed.accent ?? DEFAULT_THEME.accent,
-    };
+    return mergeTheme(JSON.parse(raw) as Partial<ThemeColors>);
   } catch {
     return { ...DEFAULT_THEME };
   }

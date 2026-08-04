@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getMe } from "@/app/lib/api";
+import { getMe, updateTheme } from "@/app/lib/api";
 import { useAuthedData } from "@/app/lib/useAuthedData";
 import { clearTokens } from "@/app/lib/auth";
 import { FloatingPanel } from "@/app/components/library-components/FloatingPanel";
@@ -18,6 +18,7 @@ import {
   DEFAULT_THEME,
   applyTheme,
   loadTheme,
+  mergeTheme,
   saveTheme,
 } from "@/app/lib/theme-preferences";
 
@@ -81,6 +82,22 @@ export default function AccountPage() {
   const { status, data: profile, error } = useAuthedData(getMe, []);
   const [prefs, setPrefs] = useState(() => loadNotificationPreferences());
   const [theme, setTheme] = useState(() => loadTheme());
+  const themeSyncTimeoutRef = useRef(null);
+
+  // reconcile with the account's saved theme once it loads — more reliable
+  // than the local cache alone, since this is the actual settings UI.
+  useEffect(() => {
+    if (profile?.theme && Object.keys(profile.theme).length > 0) {
+      const merged = mergeTheme(profile.theme);
+      // syncing an external async source (the fetched profile) into
+      // editable local state, gated on profile actually changing — not a
+      // value that could be derived directly during render instead
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setTheme(merged);
+      applyTheme(merged);
+      saveTheme(merged);
+    }
+  }, [profile]);
 
   function updatePref(key, value) {
     const next = { ...prefs, [key]: value };
@@ -93,12 +110,22 @@ export default function AccountPage() {
     setTheme(next);
     applyTheme(next);
     saveTheme(next);
+
+    // native color inputs can fire onChange continuously while dragging —
+    // apply/save locally on every event for instant feedback, but debounce
+    // the network write so we're not hammering the API mid-drag
+    clearTimeout(themeSyncTimeoutRef.current);
+    themeSyncTimeoutRef.current = setTimeout(() => {
+      updateTheme({ [key]: value }).catch(() => {});
+    }, 500);
   }
 
   function handleResetTheme() {
+    clearTimeout(themeSyncTimeoutRef.current);
     setTheme(DEFAULT_THEME);
     applyTheme(DEFAULT_THEME);
     saveTheme(DEFAULT_THEME);
+    updateTheme(DEFAULT_THEME).catch(() => {});
   }
 
   function handleSignOut() {

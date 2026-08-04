@@ -15,6 +15,9 @@ class Song(models.Model):
     nft_status = models.BooleanField(null=True, blank=True)
 class User(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
+    # {bg, fg, navBg, accent} hex colors — empty dict means "no custom theme
+    # saved yet", distinct from an explicit reset to defaults
+    theme = models.JSONField(default=dict, blank=True)
 
 #. Multiple users can have multiple libraries (like playlists)
 class Library(models.Model):

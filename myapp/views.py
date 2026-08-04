@@ -8,8 +8,12 @@ from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
 from django.utils.dateparse import parse_duration
+import re
 import requests
 from myapp.models import Library, Song
+
+HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
+THEME_KEYS = {'bg', 'fg', 'navBg', 'accent'}
 
 
 def notify_mp3juug(token, username, email, access_token):
@@ -75,7 +79,24 @@ class MeView(APIView):
             "username": user.username,
             "email": user.email,
             "phone_number": user.phone_number,
+            "theme": user.theme,
         })
+
+    # Partial update: merges the given keys into the user's saved theme
+    # instead of replacing it outright, so a client can send just the one
+    # color that changed.
+    def patch(self, request):
+        theme = request.data.get('theme')
+        if not isinstance(theme, dict):
+            return Response({'error': 'theme must be an object'}, status=400)
+        if not set(theme.keys()) <= THEME_KEYS:
+            return Response({'error': 'invalid theme keys'}, status=400)
+        for value in theme.values():
+            if not isinstance(value, str) or not HEX_COLOR_RE.match(value):
+                return Response({'error': 'theme values must be hex colors like #rrggbb'}, status=400)
+        request.user.theme = {**request.user.theme, **theme}
+        request.user.save(update_fields=['theme'])
+        return Response({'theme': request.user.theme})
 
 # Create an account. This is the entry point for links like
 # /musicv2?token=... from mp3juug.com — the token references a song that

@@ -1,4 +1,5 @@
 import { clearTokens, getAccessToken, getRefreshToken, setAccessToken, setTokens } from "@/app/lib/auth";
+import type { ThemeColors } from "@/app/lib/theme-preferences";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://127.0.0.1:8000";
 
@@ -31,6 +32,7 @@ export interface Profile {
   username: string;
   email: string;
   phone_number: string | null;
+  theme?: Partial<ThemeColors>;
 }
 
 export class ApiError extends Error {
@@ -153,4 +155,8 @@ export async function getPlaylist(id: string): Promise<PlaylistDetail> {
 
 export async function getMe(): Promise<Profile> {
   return apiFetch("/me/");
+}
+
+export async function updateTheme(theme: Partial<ThemeColors>): Promise<{ theme: ThemeColors }> {
+  return apiFetch("/me/", { method: "PATCH", body: JSON.stringify({ theme }) });
 }
