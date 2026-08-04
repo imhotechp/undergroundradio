@@ -154,16 +154,6 @@ export default function AccountPage() {
           <SettingsRow label="Reset to Default" onClick={handleResetTheme} />
         </SettingsGroup>
 
-        <SectionLabel>Subscription</SectionLabel>
-        <SettingsGroup>
-          <SettingsRow label="Current Plan" value="Free" />
-        </SettingsGroup>
-
-        <SectionLabel>Purchase History</SectionLabel>
-        <SettingsGroup>
-          <div className="px-4 py-6 text-center text-sm text-white/40">No purchases yet</div>
-        </SettingsGroup>
-
         <SectionLabel>Notifications</SectionLabel>
         <SettingsGroup>
           <SettingsRow label="Push Notifications">
