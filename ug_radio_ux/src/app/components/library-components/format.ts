@@ -1,14 +1,17 @@
 function parseDurationSeconds(duration: string): number {
-  const parts = duration.split(":").map(Number);
+  // DRF's DurationField serializes as "HH:MM:SS.ffffff" — microseconds
+  // aren't meaningful for display, so drop them before parsing
+  const [whole] = duration.split(".");
+  const parts = whole.split(":").map(Number);
   if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2];
   if (parts.length === 2) return parts[0] * 60 + parts[1];
   return 0;
 }
 
-/** DRF DurationField serializes as "HH:MM:SS" — render as the shorter "M:SS". */
+/** DRF DurationField serializes as "HH:MM:SS[.ffffff]" — render as "M:SS". */
 export function formatDuration(duration?: string | null): string | null {
   if (!duration) return null;
-  const totalSeconds = parseDurationSeconds(duration);
+  const totalSeconds = Math.round(parseDurationSeconds(duration));
   const minutes = Math.floor(totalSeconds / 60);
   const seconds = totalSeconds % 60;
   return `${minutes}:${String(seconds).padStart(2, "0")}`;
