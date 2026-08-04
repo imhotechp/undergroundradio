@@ -15,6 +15,10 @@ export function setTokens(access: string, refresh: string) {
   if (typeof window === "undefined") return;
   window.localStorage.setItem(ACCESS_TOKEN_KEY, access);
   window.localStorage.setItem(REFRESH_TOKEN_KEY, refresh);
+  // lets anything that only checked auth state once on mount (e.g. ThemeInit,
+  // which mounts once for the whole session in the root layout) react to a
+  // fresh login/signup instead of missing it entirely
+  window.dispatchEvent(new Event("auth-changed"));
 }
 
 export function setAccessToken(access: string) {
