@@ -175,6 +175,17 @@ class LibraryView(APIView):
             ).first()
             if existing_song:
                 obj_pk = existing_song.pk
+                # backfill fields that were blank on the existing row (e.g. it
+                # was created before `url` existed) with fresher incoming data
+                update_fields = []
+                if not existing_song.url and data.get('url'):
+                    existing_song.url = data['url']
+                    update_fields.append('url')
+                if not existing_song.coverArt and data.get('coverArt'):
+                    existing_song.coverArt = data['coverArt']
+                    update_fields.append('coverArt')
+                if update_fields:
+                    existing_song.save(update_fields=update_fields)
             else:
                 song_serializer = SongSerializer(data=data)
                 if song_serializer.is_valid():
