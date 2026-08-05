@@ -2,6 +2,12 @@
 keys/
 dev.sqlite3
 
+# Secrets — was committed by mistake (contained real Neon credentials);
+# rotated and untracked. Populate locally/on the server, never commit.
+.env
+.env.*
+!.env.example
+
 # Python
 __pycache__/
 *.pyc
