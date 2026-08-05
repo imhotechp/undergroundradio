@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { login } from "@/app/lib/api";
 
 export default function LoginPage() {
@@ -74,6 +75,10 @@ export default function LoginPage() {
         >
           {submitting ? "Logging in..." : "Log in"}
         </button>
+
+        <Link href="/forgot-password" className="block text-center text-sm text-white/50">
+          Forgot password?
+        </Link>
       </form>
     </div>
   );

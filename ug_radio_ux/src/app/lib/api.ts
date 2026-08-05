@@ -141,6 +141,36 @@ export async function signup(
   return body;
 }
 
+export async function requestPasswordReset(username: string): Promise<{ detail: string }> {
+  const response = await fetch(`${API_BASE_URL}/password-reset/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username }),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new ApiError(response.status, body?.error ?? "Something went wrong.");
+  }
+  return body;
+}
+
+export async function confirmPasswordReset(
+  uid: string,
+  token: string,
+  newPassword: string,
+): Promise<{ detail: string }> {
+  const response = await fetch(`${API_BASE_URL}/password-reset/confirm/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid, token, new_password: newPassword }),
+  });
+  const body = await response.json().catch(() => null);
+  if (!response.ok) {
+    throw new ApiError(response.status, body?.error ?? "Could not reset password.");
+  }
+  return body;
+}
+
 export async function getLibrary(): Promise<Track[]> {
   return apiFetch("/ground/");
 }

@@ -25,6 +25,8 @@ from myapp.views import (
     PlaylistDetailView,
     MeView,
     TokenRefreshView,
+    PasswordResetRequestView,
+    PasswordResetConfirmView,
 )
 
 urlpatterns = [
@@ -37,4 +39,6 @@ urlpatterns = [
     path('playlists/<int:pk>/', PlaylistDetailView.as_view()),
     path('me/', MeView.as_view()),
     path('token/refresh/', TokenRefreshView.as_view()),
+    path('password-reset/', PasswordResetRequestView.as_view()),
+    path('password-reset/confirm/', PasswordResetConfirmView.as_view()),
 ]

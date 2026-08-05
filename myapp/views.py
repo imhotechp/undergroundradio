@@ -2,15 +2,24 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from myapp.serializers import AccountSerializer, SongSerializer, LibrarySerializer
 from rest_framework.permissions import AllowAny
-from django.contrib.auth import authenticate
+from django.contrib.auth import authenticate, get_user_model
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
 from django.utils.dateparse import parse_duration
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
+from django.utils.encoding import force_bytes, force_str
 import re
 import requests
 from myapp.models import Library, Song
+
+User = get_user_model()
 
 HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
 THEME_KEYS = {'bg', 'fg', 'navBg', 'accent'}
@@ -34,6 +43,24 @@ def notify_mp3juug(token, username, email, access_token):
         )
     except requests.RequestException as e:
         print('notify_mp3juug failed:', e, flush=True)
+
+
+def send_welcome_email(user):
+    """Best-effort account-creation confirmation — a slow or broken email
+    provider must never block or break the signup response."""
+    try:
+        send_mail(
+            subject='Welcome to Underground Radio',
+            message=(
+                f'Hey {user.username}, your account is ready.\n\n'
+                'Start streaming at https://undergroundradio.us/home'
+            ),
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[user.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        print('send_welcome_email failed:', e, flush=True)
 
 
 # this will be ground (homepage)
@@ -119,6 +146,8 @@ class AccountView(APIView):
         refresh_token = str(jwt)
         access_token = str(jwt.access_token)
 
+        send_welcome_email(user)
+
         if token:
             notify_mp3juug(token, user.username, user.email, access_token)
 
@@ -146,6 +175,69 @@ class LoginView(APIView):
             notify_mp3juug(token, user.username, user.email, access_token)
 
         return Response({"access": access_token, "refresh": refresh_token})
+
+
+# Step 1 of forgot-password: emails a reset link if the username exists.
+# Always returns the same response either way — revealing which usernames
+# are/aren't registered would let an attacker enumerate accounts.
+class PasswordResetRequestView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        username = (request.data.get('username') or '').strip()
+        if username:
+            user = User.objects.filter(username=username).first()
+            if user and user.email:
+                uid = urlsafe_base64_encode(force_bytes(user.pk))
+                token = default_token_generator.make_token(user)
+                reset_link = f'https://undergroundradio.us/reset-password?uid={uid}&token={token}'
+                try:
+                    send_mail(
+                        subject='Reset your Underground Radio password',
+                        message=(
+                            f'Hey {user.username}, someone requested a password reset '
+                            f'for your account. If this was you, reset it here:\n\n'
+                            f'{reset_link}\n\n'
+                            "If you didn't request this, you can ignore this email."
+                        ),
+                        from_email=settings.DEFAULT_FROM_EMAIL,
+                        recipient_list=[user.email],
+                        fail_silently=False,
+                    )
+                except Exception as e:
+                    print('send_password_reset_email failed:', e, flush=True)
+
+        return Response({'detail': 'If that account exists, a reset link has been sent.'})
+
+
+# Step 2: validates the token from the emailed link and sets the new password.
+class PasswordResetConfirmView(APIView):
+    permission_classes = [AllowAny]
+
+    def post(self, request):
+        uid = request.data.get('uid')
+        token = request.data.get('token')
+        new_password = request.data.get('new_password')
+        if not uid or not token or not new_password:
+            return Response({'error': 'uid, token, and new_password are required.'}, status=400)
+
+        try:
+            pk = force_str(urlsafe_base64_decode(uid))
+            user = User.objects.get(pk=pk)
+        except (User.DoesNotExist, ValueError, TypeError, OverflowError):
+            return Response({'error': 'Invalid or expired reset link.'}, status=400)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({'error': 'Invalid or expired reset link.'}, status=400)
+
+        try:
+            validate_password(new_password, user=user)
+        except DjangoValidationError as e:
+            return Response({'error': ' '.join(e.messages)}, status=400)
+
+        user.set_password(new_password)
+        user.save(update_fields=['password'])
+        return Response({'detail': 'Password reset successfully.'})
 
 
 # Default DRF permission is IsAuthenticated, which needs a valid access

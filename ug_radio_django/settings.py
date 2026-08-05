@@ -138,6 +138,20 @@ else:
         }
     }
 
+# Email — Brevo SMTP relay. Falls back to printing to stdout when Brevo
+# credentials aren't set (e.g. local dev), so email-sending code paths don't
+# need a real provider to run locally.
+EMAIL_HOST_USER = getenv('BREVO_SMTP_LOGIN')
+EMAIL_HOST_PASSWORD = getenv('BREVO_SMTP_KEY')
+if EMAIL_HOST_USER and EMAIL_HOST_PASSWORD:
+    EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+    EMAIL_HOST = 'smtp-relay.brevo.com'
+    EMAIL_PORT = 587
+    EMAIL_USE_TLS = True
+else:
+    EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+DEFAULT_FROM_EMAIL = getenv('DEFAULT_FROM_EMAIL', 'no-reply@undergroundradio.us')
+
 AUTH_USER_MODEL = "myapp.User"
 
 # Password validation
