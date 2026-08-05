@@ -30,4 +30,8 @@ export function clearTokens() {
   if (typeof window === "undefined") return;
   window.localStorage.removeItem(ACCESS_TOKEN_KEY);
   window.localStorage.removeItem(REFRESH_TOKEN_KEY);
+  // lets ThemeInit (and anything else watching auth state) reset
+  // account-specific state on logout instead of leaking it into whichever
+  // account logs in next on this browser
+  window.dispatchEvent(new Event("auth-changed"));
 }

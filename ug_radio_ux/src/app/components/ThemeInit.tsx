@@ -1,33 +1,31 @@
 "use client";
 
 import { useEffect } from "react";
-import { applyTheme, isDefaultTheme, loadTheme, mergeTheme, saveTheme } from "@/app/lib/theme-preferences";
-import { getMe, updateTheme } from "@/app/lib/api";
+import { applyTheme, DEFAULT_THEME, loadTheme, mergeTheme, saveTheme } from "@/app/lib/theme-preferences";
+import { getMe } from "@/app/lib/api";
 import { getAccessToken } from "@/app/lib/auth";
 
 /**
- * Fetches the account's saved theme and applies it, or — if the account has
- * no theme saved yet but this browser does (e.g. a pre-existing localStorage
- * value from before server-side sync existed) — claims the local one as the
- * account's theme instead of silently discarding it. No-ops if logged out.
+ * Fetches the account's saved theme and applies it. If logged out, resets to
+ * default instead — localStorage is a single browser-wide slot, not scoped
+ * per account, so leaving a previous account's colors cached would leak them
+ * into whichever account logs in next.
  */
 async function syncThemeFromServer() {
-  if (!getAccessToken()) return;
+  if (!getAccessToken()) {
+    applyTheme(DEFAULT_THEME);
+    saveTheme(DEFAULT_THEME);
+    return;
+  }
   try {
     const profile = await getMe();
     const hasServerTheme = profile.theme && Object.keys(profile.theme).length > 0;
-    if (hasServerTheme) {
-      const merged = mergeTheme(profile.theme!);
-      applyTheme(merged);
-      saveTheme(merged);
-    } else {
-      const local = loadTheme();
-      if (!isDefaultTheme(local)) {
-        updateTheme(local).catch(() => {});
-      }
-    }
+    const theme = hasServerTheme ? mergeTheme(profile.theme!) : DEFAULT_THEME;
+    applyTheme(theme);
+    saveTheme(theme);
   } catch {
-    // best-effort; the already-applied local theme remains in place
+    // best-effort; whatever's currently applied (the local cache from the
+    // last successful sync) remains in place
   }
 }
 
@@ -36,8 +34,9 @@ async function syncThemeFromServer() {
  * with the account's saved theme so it follows the user across devices, not
  * just the browser. Also re-syncs on "auth-changed" — this component mounts
  * once for the whole session (root layout), so without that listener a login
- * that happens *after* mount (the common case, since a fresh session usually
- * starts on /login before any token exists) would never trigger a sync.
+ * or logout that happens *after* mount (the common case, since a fresh
+ * session usually starts on /login before any token exists) would never
+ * trigger a sync.
  */
 export function ThemeInit() {
   useEffect(() => {
