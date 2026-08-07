@@ -2,6 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 import type { Track } from "@/app/lib/api";
+import { getAccessToken } from "@/app/lib/auth";
 
 interface PlayerContextValue {
   currentTrack: Track | null;
@@ -105,6 +106,24 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       audio.removeEventListener("ended", onEnded);
     };
   }, [playNext]);
+
+  // stop and clear playback on logout — otherwise the audio (and the
+  // NowPlayingBar showing it) keeps going right through the login screen
+  useEffect(() => {
+    function onAuthChanged() {
+      if (getAccessToken()) return;
+      const audio = audioRef.current;
+      if (audio) {
+        audio.pause();
+        audio.removeAttribute("src");
+        audio.load();
+      }
+      setQueue([]);
+      setCurrentIndex(null);
+    }
+    window.addEventListener("auth-changed", onAuthChanged);
+    return () => window.removeEventListener("auth-changed", onAuthChanged);
+  }, []);
 
   // lock-screen / Control Center metadata (title, artist, artwork)
   useEffect(() => {
