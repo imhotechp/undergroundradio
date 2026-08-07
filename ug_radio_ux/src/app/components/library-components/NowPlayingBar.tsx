@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { TrackArt } from "@/app/components/library-components/track-art";
 import { PauseIcon, PlayIcon } from "@/app/components/library-components/icons";
@@ -13,8 +14,13 @@ function hashIndex(key: string) {
 }
 
 export function NowPlayingBar() {
-  const { currentTrack, isPaused, currentTime, duration, togglePlay } = usePlayer();
-  const progress = duration > 0 ? Math.min(currentTime / duration, 1) : 0;
+  const { currentTrack, isPaused, currentTime, duration, togglePlay, seek } = usePlayer();
+  // while actively dragging, show the dragged position instead of currentTime —
+  // currentTime only updates on the audio's next "timeupdate" tick, which lags
+  // behind the pointer and makes the thumb jump/fight the drag otherwise
+  const [scrubTime, setScrubTime] = useState<number | null>(null);
+  const displayTime = scrubTime ?? Math.min(currentTime, duration || 0);
+  const progress = duration > 0 ? Math.min(displayTime / duration, 1) : 0;
 
   return (
     <AnimatePresence>
@@ -40,7 +46,7 @@ export function NowPlayingBar() {
             </div>
             {duration > 0 && (
               <span className="shrink-0 text-xs tabular-nums text-white/40">
-                {formatSeconds(currentTime)} / {formatSeconds(duration)}
+                {formatSeconds(displayTime)} / {formatSeconds(duration)}
               </span>
             )}
             <button
@@ -52,10 +58,29 @@ export function NowPlayingBar() {
               {isPaused ? <PlayIcon /> : <PauseIcon />}
             </button>
           </div>
-          <div className="h-0.5 w-full bg-white/10">
-            <div
-              className="h-full bg-[var(--theme-accent)] transition-[width]"
-              style={{ width: `${progress * 100}%` }}
+          <div className="relative flex h-4 w-full items-center">
+            <div className="pointer-events-none absolute inset-x-0 h-0.5 w-full bg-white/10">
+              <div
+                className="h-full bg-[var(--theme-accent)] transition-[width]"
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
+            <input
+              type="range"
+              aria-label="Seek"
+              min={0}
+              max={duration || 0}
+              step={0.1}
+              value={displayTime}
+              disabled={!duration}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setScrubTime(value);
+                seek(value);
+              }}
+              onPointerUp={() => setScrubTime(null)}
+              onKeyUp={() => setScrubTime(null)}
+              className="absolute inset-0 h-full w-full cursor-pointer touch-none opacity-0 disabled:cursor-default"
             />
           </div>
         </motion.div>
