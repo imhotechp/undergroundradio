@@ -105,3 +105,12 @@ class LibrarySerializer(serializers.ModelSerializer):
     class Meta:
         model = Library
         fields = '__all__'
+        # LibraryView always sets this from request.user (never trusts
+        # client input, for auth reasons) — but as a required field it was
+        # rejecting every request that didn't also supply it, which is every
+        # request, since callers have no reason to send it. Making it
+        # optional here just stops that pointless validation failure; the
+        # view's override is what actually determines the value.
+        extra_kwargs = {
+            'username': {'required': False},
+        }
