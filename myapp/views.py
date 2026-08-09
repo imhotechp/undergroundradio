@@ -130,6 +130,7 @@ class MeView(APIView):
 # should be delivered to whoever completes signup through that link.
 class AccountView(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'auth'
 
     def post(self, request):
         token = request.query_params.get('token')
@@ -158,6 +159,8 @@ class AccountView(APIView):
 # gets attached via the mp3juug.com notification below.
 class LoginView(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'auth'
+
     def post(self, request):
         username = request.data.get("username")
         password = request.data.get("password")
@@ -182,6 +185,7 @@ class LoginView(APIView):
 # are/aren't registered would let an attacker enumerate accounts.
 class PasswordResetRequestView(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'auth'
 
     def post(self, request):
         username = (request.data.get('username') or '').strip()
@@ -213,6 +217,7 @@ class PasswordResetRequestView(APIView):
 # Step 2: validates the token from the emailed link and sets the new password.
 class PasswordResetConfirmView(APIView):
     permission_classes = [AllowAny]
+    throttle_scope = 'auth'
 
     def post(self, request):
         uid = request.data.get('uid')
@@ -270,6 +275,8 @@ class LibraryView(APIView):
     # library being modified is always the caller's own, never a client-supplied one.
     def post(self, request):
         songs = request.data.get('song')
+        if not isinstance(songs, list) or not songs:
+            return Response({'error': 'song must be a non-empty list.'}, status=400)
         urls = request.data.get('url') or []
         durations = request.data.get('duration') or []
         results = []

@@ -87,6 +87,15 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
     ],
+    # Only views that opt in with throttle_scope = 'auth' are limited by this —
+    # login/signup/password-reset, to blunt brute-force/credential-stuffing.
+    # Everything else is unaffected.
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.ScopedRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "auth": "10/min",
+    },
 }
 
 
