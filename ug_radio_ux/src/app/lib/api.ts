@@ -37,9 +37,14 @@ export interface Profile {
 
 export class ApiError extends Error {
   status: number;
-  constructor(status: number, message: string) {
+  // Present when the backend attached the failure to specific input(s)
+  // (e.g. { username: "That username is already taken." }) so a form can
+  // show each error under its own field instead of one generic message.
+  fields?: Record<string, string>;
+  constructor(status: number, message: string, fields?: Record<string, string>) {
     super(message);
     this.status = status;
+    this.fields = fields;
   }
 }
 
@@ -135,7 +140,9 @@ export async function signup(
   });
   const body = await response.json().catch(() => null);
   if (!response.ok) {
-    throw new ApiError(response.status, body?.error ?? "Signup failed.");
+    const fields = body?.errors as Record<string, string> | undefined;
+    const message = fields ? Object.values(fields)[0] : (body?.error ?? "Signup failed.");
+    throw new ApiError(response.status, message, fields);
   }
   setTokens(body.access, body.refresh);
   return body;

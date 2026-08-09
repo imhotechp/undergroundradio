@@ -23,34 +23,42 @@ class AccountSerializer(serializers.ModelSerializer):
             'phone_number',
         )
 
-    #. validates input
+    #. validates input, attaching each failure to its own field (not a single
+    #. generic non-field error) so the caller can tell the user exactly which
+    #. box is wrong instead of them guessing, and collects every failing
+    #. field at once instead of stopping at the first one found.
     def validate(self, data):
         data['username'] = data['username'].strip().lower()
         data['password'] = data['password'].strip()
         data['email'] = data['email'].strip().lower()
         data['phone_number'] = data['phone_number'].strip()
-        #. check if username length is greater than 20 or less than 3
+
+        errors = {}
+
         if len(data['username']) < 3 or len(data['username']) > 20:
-            raise serializers.ValidationError('Username must be between 3 characters long')
-        if not re.match(r"^\w+$", data['username']):
-            raise serializers.ValidationError(
-                'Invalid characters used in username. ' \
-                'Only letters, numbers, and underscores ' \
-                'are allowed')
-        #. check if password at least 8 characters + a certain format
+            errors['username'] = 'Username must be between 3 and 20 characters.'
+        elif not re.match(r"^\w+$", data['username']):
+            errors['username'] = (
+                'Only letters, numbers, and underscores are allowed in username.'
+            )
+
         if len(data['password']) < 8:
-            raise serializers.ValidationError('Password must be at least 8 characters long')
-        if not re.match(r"^[a-zA-Z0-9_!@#$]+$", data['password']):
-            raise serializers.ValidationError(
-                'Invalid characters used in password. ' \
-                'Only letters, numbers, and these ' \
-                'special characters "_!@#$" are allowed')
-        #. check if email is certain format
+            errors['password'] = 'Password must be at least 8 characters long.'
+        elif not re.match(r"^[a-zA-Z0-9_!@#$]+$", data['password']):
+            errors['password'] = (
+                'Only letters, numbers, and these special characters "_!@#$" '
+                'are allowed in password.'
+            )
+
         if not re.match(r"^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9.-]+$", data['email']):
-            raise serializers.ValidationError('Invalid characters used in email.')
-        #. check if phone number certain format 
-        if not re.match(r"^\d{10,10}$", data['phone_number']):
-            raise serializers.ValidationError('Invalid US phone number.')
+            errors['email'] = 'Enter a valid email address.'
+
+        if not re.match(r"^\d{10}$", data['phone_number']):
+            errors['phone_number'] = 'Enter a valid 10-digit US phone number.'
+
+        if errors:
+            raise serializers.ValidationError(errors)
+
         return data
     # create user 
     def create(self, validated_data):

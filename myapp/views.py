@@ -136,13 +136,16 @@ class AccountView(APIView):
         token = request.query_params.get('token')
         serializer = AccountSerializer(data=request.data)
         if not serializer.is_valid():
-            message = next(iter(serializer.errors.values()))[0]
-            return Response({'error': str(message)}, status=400)
+            # Keyed per-field so the frontend can show each error under its
+            # own input instead of one generic message the user has to guess
+            # the box for.
+            field_errors = {field: str(msgs[0]) for field, msgs in serializer.errors.items()}
+            return Response({'errors': field_errors}, status=400)
 
         try:
             user = serializer.save()
         except IntegrityError:
-            return Response({'error': 'That username is already taken.'}, status=400)
+            return Response({'errors': {'username': 'That username is already taken.'}}, status=400)
         jwt = RefreshToken.for_user(user)
         refresh_token = str(jwt)
         access_token = str(jwt.access_token)
