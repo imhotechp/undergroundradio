@@ -134,6 +134,14 @@ if getenv('NEON_HOST'):
             'OPTIONS': {
                 'sslmode': 'require',
             },
+            # Without this, Django opens a brand-new TCP+TLS+auth connection
+            # to Neon (a remote host) on every single request and tears it
+            # down at the end — every page nav (library/home/account each
+            # hit the backend independently) was paying that full handshake
+            # cost from scratch. Reuse connections for 60s instead; health
+            # checks drop ones Neon closed server-side rather than erroring.
+            'CONN_MAX_AGE': 60,
+            'CONN_HEALTH_CHECKS': True,
         }
     }
 else:

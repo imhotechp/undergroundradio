@@ -5,6 +5,7 @@ from rest_framework.permissions import AllowAny
 from django.contrib.auth import authenticate, get_user_model
 from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
+from django.db.models import Count
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenRefreshView as BaseTokenRefreshView
 from django.utils.dateparse import parse_duration
@@ -79,13 +80,17 @@ class HomeView(APIView):
 # above) isn't one of these; it's the aggregate across every playlist a user has.
 class PlaylistsView(APIView):
     def get(self, request):
-        libraries = Library.objects.filter(username=request.user)
+        # annotate instead of library.song.count() per row in a loop — that
+        # was one extra query per playlist instead of one query total
+        libraries = Library.objects.filter(username=request.user).annotate(
+            song_count=Count('song')
+        )
         data = [
             {
                 "id": library.pk,
                 "name": library.name,
                 "coverArt": library.coverArt,
-                "song_count": library.song.count(),
+                "song_count": library.song_count,
             }
             for library in libraries
         ]
