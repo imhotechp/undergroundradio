@@ -297,10 +297,16 @@ class LibraryView(APIView):
             # parse_duration('') parses as a real 0:00:00, not an error — omit
             # the key entirely when there's no value instead of storing a fake
             # zero duration for a song whose length just wasn't captured
+            # Validate before handing it to SongSerializer — a malformed
+            # duration (whatever shape the caller sent) used to fail the
+            # entire song add, even though duration is just optional
+            # metadata. Drop it instead of blocking the song.
             duration_value = durations[i] if i < len(durations) else ''
-            if duration_value:
+            if duration_value and parse_duration(str(duration_value)) is not None:
                 data['duration'] = duration_value
             else:
+                if duration_value:
+                    print('dropping unparseable duration:', repr(duration_value), flush=True)
                 data.pop('duration', None)
 
             # reuse an existing identical Song instead of creating a duplicate
