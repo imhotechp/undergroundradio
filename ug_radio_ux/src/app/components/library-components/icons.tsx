@@ -2,18 +2,52 @@
 
 import { motion } from "framer-motion";
 
-export function PlayIcon() {
+export function PlayIcon({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <path d="M6 4.5v15l14-7.5-14-7.5z" />
     </svg>
   );
 }
 
-export function PauseIcon() {
+export function PauseIcon({ size = 18 }: { size?: number }) {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
       <path d="M6 4.5h4.5v15H6zM13.5 4.5H18v15h-4.5z" />
+    </svg>
+  );
+}
+
+export function SkipNextIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M6 5v14l11-7-11-7zM18 5v14h2V5h-2z" />
+    </svg>
+  );
+}
+
+export function SkipPreviousIcon({ size = 22 }: { size?: number }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+      <path d="M18 5v14L7 12l11-7zM6 5v14H4V5h2z" />
+    </svg>
+  );
+}
+
+export function ChevronDownIcon() {
+  return (
+    <svg
+      width="22"
+      height="22"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2.2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden
+    >
+      <path d="M5 9l7 7 7-7" />
     </svg>
   );
 }
