@@ -39,6 +39,25 @@ SECRET_KEY = getenv('DJANGO_SECRET_KEY', 'django-insecure--00vaxs5nwhlgov1x09&-z
 # Defaults to True to preserve local dev behavior; production sets DJANGO_DEBUG=False.
 DEBUG = getenv('DJANGO_DEBUG', 'True') == 'True'
 
+# Error monitoring — no-ops when SENTRY_DSN is unset (e.g. local dev). DSNs
+# are write-only ingestion endpoints, not secrets, but there's no tracked
+# default here since every environment should point at its own Sentry
+# project. Set it in ug_radio_django/.env (untracked) or the systemd unit.
+SENTRY_DSN = getenv('SENTRY_DSN')
+if SENTRY_DSN:
+    import sentry_sdk
+    from sentry_sdk.integrations.django import DjangoIntegration
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration()],
+        traces_sample_rate=0.1,
+        environment=getenv('SENTRY_ENVIRONMENT', 'development' if DEBUG else 'production'),
+        # Request bodies here include passwords/JWTs — don't attach them or
+        # other request PII to error events by default.
+        send_default_pii=False,
+    )
+
 ALLOWED_HOSTS = [
     '127.0.0.1',
     '72.61.75.183',
