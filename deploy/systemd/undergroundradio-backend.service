@@ -14,7 +14,14 @@ WorkingDirectory=/srv/backend
 # serialization layer, so worker count translates directly into concurrency.
 # EDIT: set --workers to roughly (2 x CPU cores) + 1 for this box, then
 # re-run deploy/k6/load-test.js and adjust from there.
-ExecStart=/srv/backend/venv/bin/gunicorn ug_radio_django.wsgi:application --bind 127.0.0.1:8000 --workers 4
+#
+# --worker-class gthread --threads 4: each worker handles up to 4 requests
+# concurrently via threads instead of just 1. Chosen over more plain workers
+# because every view here is I/O-bound (waiting on Neon over the network,
+# not CPU work) — a thread sitting idle on that wait costs far less than a
+# whole extra process would. 4 workers x 4 threads = 16 concurrent request
+# slots instead of 4.
+ExecStart=/srv/backend/venv/bin/gunicorn ug_radio_django.wsgi:application --bind 127.0.0.1:8000 --workers 4 --worker-class gthread --threads 4
 
 # NEON_* DB credentials are already read from the tracked ug_radio_django/.env
 # file via python-dotenv — no need to duplicate them here. JWT key paths default
