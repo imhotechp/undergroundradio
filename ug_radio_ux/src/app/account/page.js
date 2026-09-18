@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getMe, updateTheme } from "@/app/lib/api";
+import { getMe, updateTheme, updateUsername } from "@/app/lib/api";
 import { useAuthedData } from "@/app/lib/useAuthedData";
 import { clearTokens } from "@/app/lib/auth";
 import { FloatingPanel } from "@/app/components/library-components/FloatingPanel";
@@ -56,6 +56,48 @@ function SettingsRow({ label, value, onClick, children }) {
   );
 }
 
+function EditableRow({
+  label,
+  value,
+  editing,
+  draft,
+  error,
+  saving,
+  inputRef,
+  onStartEdit,
+  onDraftChange,
+  onCommit,
+  onCancel,
+}) {
+  if (!editing) {
+    return <SettingsRow label={label} value={value} onClick={onStartEdit} />;
+  }
+  return (
+    <div className="border-b border-white/5 px-4 py-3 last:border-none">
+      <div className="flex items-center justify-between gap-3">
+        <span className="text-[15px] text-[var(--theme-fg)]">{label}</span>
+        <input
+          ref={inputRef}
+          value={draft}
+          onChange={(e) => onDraftChange(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") onCommit();
+            if (e.key === "Escape") onCancel();
+          }}
+          onBlur={onCommit}
+          disabled={saving}
+          maxLength={20}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          className="w-40 rounded-lg bg-white/10 px-2 py-1 text-right text-sm text-[var(--theme-fg)] outline-none focus:ring-1 focus:ring-white/30"
+        />
+      </div>
+      {error && <p className="pt-1 text-right text-xs text-red-400">{error}</p>}
+    </div>
+  );
+}
+
 function ColorField({ label, value, onChange }) {
   return (
     <div className="flex w-full items-center justify-between gap-3 border-b border-white/5 px-4 py-3 last:border-none">
@@ -83,6 +125,15 @@ export default function AccountPage() {
   const [prefs, setPrefs] = useState(() => loadNotificationPreferences());
   const [theme, setTheme] = useState(() => loadTheme());
   const themeSyncTimeoutRef = useRef(null);
+
+  const [usernameOverride, setUsernameOverride] = useState(null);
+  const [usernameEditing, setUsernameEditing] = useState(false);
+  const [usernameDraft, setUsernameDraft] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [usernameSaving, setUsernameSaving] = useState(false);
+  const usernameInputRef = useRef(null);
+
+  const displayedUsername = usernameOverride ?? profile?.username;
 
   // reconcile with the account's saved theme once it loads — more reliable
   // than the local cache alone, since this is the actual settings UI.
@@ -133,10 +184,44 @@ export default function AccountPage() {
     router.replace("/login");
   }
 
+  function startEditUsername() {
+    setUsernameDraft(displayedUsername ?? "");
+    setUsernameError("");
+    setUsernameEditing(true);
+  }
+
+  function cancelEditUsername() {
+    setUsernameEditing(false);
+    setUsernameError("");
+  }
+
+  async function commitUsername() {
+    const next = usernameDraft.trim().toLowerCase();
+    if (!next || next === displayedUsername) {
+      setUsernameEditing(false);
+      return;
+    }
+    setUsernameSaving(true);
+    setUsernameError("");
+    try {
+      const result = await updateUsername(next);
+      setUsernameOverride(result.username);
+      setUsernameEditing(false);
+    } catch (err) {
+      setUsernameError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setUsernameSaving(false);
+    }
+  }
+
+  useEffect(() => {
+    if (usernameEditing) usernameInputRef.current?.focus();
+  }, [usernameEditing]);
+
   if (status === "loading") return <StatusCard>Loading account...</StatusCard>;
   if (status === "error") return <StatusCard tone="error">{error}</StatusCard>;
 
-  const initial = profile?.username?.[0]?.toUpperCase() ?? "?";
+  const initial = displayedUsername?.[0]?.toUpperCase() ?? "?";
 
   return (
     <FloatingPanel>
@@ -154,7 +239,7 @@ export default function AccountPage() {
           </div>
           <div className="min-w-0">
             <p className="truncate text-lg font-semibold text-[var(--theme-fg)]">
-              {profile.username}
+              {displayedUsername}
             </p>
             <p className="truncate text-sm text-white/40">{profile.email}</p>
           </div>
@@ -208,7 +293,19 @@ export default function AccountPage() {
 
         <SectionLabel>Account</SectionLabel>
         <SettingsGroup>
-          <SettingsRow label="Username" value={profile.username} />
+          <EditableRow
+            label="Username"
+            value={displayedUsername}
+            editing={usernameEditing}
+            draft={usernameDraft}
+            error={usernameError}
+            saving={usernameSaving}
+            inputRef={usernameInputRef}
+            onStartEdit={startEditUsername}
+            onDraftChange={setUsernameDraft}
+            onCommit={commitUsername}
+            onCancel={cancelEditUsername}
+          />
           <SettingsRow label="Email" value={profile.email} />
           <SettingsRow label="Phone Number" value={profile.phone_number || "Not set"} />
         </SettingsGroup>

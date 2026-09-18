@@ -32,7 +32,16 @@ export function LibraryScreen({
 
   function handleShuffle() {
     if (tracks.length === 0) return;
-    playQueue(tracks, Math.floor(Math.random() * tracks.length));
+    // Fisher-Yates: shuffles the queue itself, not just the starting
+    // track — playNext/playPrevious walk the queue in order, so a fixed
+    // track order with a random start index would still play in the
+    // same sequence after the first song.
+    const shuffled = [...tracks];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+    playQueue(shuffled, 0);
   }
 
   return (

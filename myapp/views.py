@@ -114,21 +114,48 @@ class MeView(APIView):
             "theme": user.theme,
         })
 
-    # Partial update: merges the given keys into the user's saved theme
-    # instead of replacing it outright, so a client can send just the one
-    # color that changed.
+    # Partial update: each recognized top-level key is applied independently
+    # so a client can send just the one thing that changed (e.g. only
+    # 'username', or only 'theme', which itself merges into the saved theme
+    # instead of replacing it outright).
     def patch(self, request):
-        theme = request.data.get('theme')
-        if not isinstance(theme, dict):
-            return Response({'error': 'theme must be an object'}, status=400)
-        if not set(theme.keys()) <= THEME_KEYS:
-            return Response({'error': 'invalid theme keys'}, status=400)
-        for value in theme.values():
-            if not isinstance(value, str) or not HEX_COLOR_RE.match(value):
-                return Response({'error': 'theme values must be hex colors like #rrggbb'}, status=400)
-        request.user.theme = {**request.user.theme, **theme}
-        request.user.save(update_fields=['theme'])
-        return Response({'theme': request.user.theme})
+        updated = {}
+
+        if 'username' in request.data:
+            username = (request.data.get('username') or '').strip().lower()
+            if len(username) < 3 or len(username) > 20:
+                return Response({'error': 'Username must be between 3 and 20 characters.'}, status=400)
+            if not re.match(r"^\w+$", username):
+                return Response(
+                    {'error': 'Only letters, numbers, and underscores are allowed in username.'},
+                    status=400,
+                )
+            if User.objects.exclude(pk=request.user.pk).filter(username=username).exists():
+                return Response({'error': 'That username is already taken.'}, status=400)
+            request.user.username = username
+            try:
+                request.user.save(update_fields=['username'])
+            except IntegrityError:
+                return Response({'error': 'That username is already taken.'}, status=400)
+            updated['username'] = username
+
+        if 'theme' in request.data:
+            theme = request.data.get('theme')
+            if not isinstance(theme, dict):
+                return Response({'error': 'theme must be an object'}, status=400)
+            if not set(theme.keys()) <= THEME_KEYS:
+                return Response({'error': 'invalid theme keys'}, status=400)
+            for value in theme.values():
+                if not isinstance(value, str) or not HEX_COLOR_RE.match(value):
+                    return Response({'error': 'theme values must be hex colors like #rrggbb'}, status=400)
+            request.user.theme = {**request.user.theme, **theme}
+            request.user.save(update_fields=['theme'])
+            updated['theme'] = request.user.theme
+
+        if not updated:
+            return Response({'error': 'Nothing to update.'}, status=400)
+
+        return Response(updated)
 
 # Create an account. This is the entry point for links like
 # /musicv2?token=... from mp3juug.com — the token references a song that

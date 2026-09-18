@@ -197,3 +197,7 @@ export async function getMe(): Promise<Profile> {
 export async function updateTheme(theme: Partial<ThemeColors>): Promise<{ theme: ThemeColors }> {
   return apiFetch("/me/", { method: "PATCH", body: JSON.stringify({ theme }) });
 }
+
+export async function updateUsername(username: string): Promise<{ username: string }> {
+  return apiFetch("/me/", { method: "PATCH", body: JSON.stringify({ username }) });
+}
