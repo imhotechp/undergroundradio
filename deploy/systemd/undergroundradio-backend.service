@@ -12,16 +12,17 @@ WorkingDirectory=/srv/backend
 # uvicorn workers cut errors to 0% but barely moved p95 latency (still ~4.5s
 # at 50 concurrent users). Gunicorn's sync workers don't have that
 # serialization layer, so worker count translates directly into concurrency.
-# EDIT: set --workers to roughly (2 x CPU cores) + 1 for this box, then
-# re-run deploy/k6/load-test.js and adjust from there.
+# --workers 5: (2 x CPU cores) + 1 for this box's 2 cores. Re-run
+# deploy/k6/load-test.js after any hardware change and adjust from there.
 #
-# --worker-class gthread --threads 4: each worker handles up to 4 requests
+# --worker-class gthread --threads 8: each worker handles up to 8 requests
 # concurrently via threads instead of just 1. Chosen over more plain workers
 # because every view here is I/O-bound (waiting on Neon over the network,
 # not CPU work) — a thread sitting idle on that wait costs far less than a
-# whole extra process would. 4 workers x 4 threads = 16 concurrent request
-# slots instead of 4.
-ExecStart=/srv/backend/venv/bin/gunicorn ug_radio_django.wsgi:application --bind 127.0.0.1:8000 --workers 4 --worker-class gthread --threads 4
+# whole extra process would. 5 workers x 8 threads = 40 concurrent request
+# slots. (Raised from 4x4=16 after 16 slots started queueing visibly at 100
+# concurrent load-test users — 0% errors, but p95 latency rose to ~1.6s.)
+ExecStart=/srv/backend/venv/bin/gunicorn ug_radio_django.wsgi:application --bind 127.0.0.1:8000 --workers 5 --worker-class gthread --threads 8
 
 # NEON_* DB credentials are already read from the tracked ug_radio_django/.env
 # file via python-dotenv — no need to duplicate them here. JWT key paths default
