@@ -1,17 +1,20 @@
 [Unit]
-Description=undergroundradio Django backend (uvicorn/asgi)
+Description=undergroundradio Django backend (gunicorn/wsgi)
 After=network.target
 
 [Service]
 Type=simple
-# EDIT: point these at the real clone + venv paths on the server.
-WorkingDirectory=/opt/undergroundradio/undergroundradio
-# EDIT: set --workers to roughly (2 x CPU cores) + 1 as a starting point for
-# this box, then re-run deploy/k6/load-test.js and adjust from there. A single
-# worker (the old default) serializes every request behind whichever one is
-# in flight — confirmed by a load test where p95 latency went from ~450ms at
-# 20 concurrent users to ~4.5s (with some requests over 30s) at 50.
-ExecStart=/opt/undergroundradio/venv/bin/uvicorn ug_radio_django.asgi:application --host 127.0.0.1 --port 8000 --workers 4
+WorkingDirectory=/srv/backend
+# Runs under gunicorn/WSGI, not uvicorn/ASGI — every view here is a plain
+# synchronous DRF APIView (nothing needs websockets/async), and Django's ASGI
+# adapter serializes sync view execution onto a single thread per process
+# regardless of --workers count. That showed up as a load test where adding
+# uvicorn workers cut errors to 0% but barely moved p95 latency (still ~4.5s
+# at 50 concurrent users). Gunicorn's sync workers don't have that
+# serialization layer, so worker count translates directly into concurrency.
+# EDIT: set --workers to roughly (2 x CPU cores) + 1 for this box, then
+# re-run deploy/k6/load-test.js and adjust from there.
+ExecStart=/srv/backend/venv/bin/gunicorn ug_radio_django.wsgi:application --bind 127.0.0.1:8000 --workers 4
 
 # NEON_* DB credentials are already read from the tracked ug_radio_django/.env
 # file via python-dotenv — no need to duplicate them here. JWT key paths default

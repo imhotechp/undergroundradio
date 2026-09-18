@@ -11,6 +11,7 @@ django-mongodb-backend==5.2.3
 djangorestframework==3.16.1
 djangorestframework_simplejwt==5.5.1
 dnspython==2.8.0
+gunicorn==26.2.0
 h11==0.16.0
 idna==3.11
 psycopg2-binary==2.9.11
@@ -22,4 +23,3 @@ requests==2.32.5
 sqlparse==0.5.4
 typing_extensions==4.15.0
 urllib3==2.6.3
-uvicorn==0.40.0
