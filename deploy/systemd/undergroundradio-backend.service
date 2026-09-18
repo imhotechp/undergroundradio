@@ -6,7 +6,12 @@ After=network.target
 Type=simple
 # EDIT: point these at the real clone + venv paths on the server.
 WorkingDirectory=/opt/undergroundradio/undergroundradio
-ExecStart=/opt/undergroundradio/venv/bin/uvicorn ug_radio_django.asgi:application --host 127.0.0.1 --port 8000
+# EDIT: set --workers to roughly (2 x CPU cores) + 1 as a starting point for
+# this box, then re-run deploy/k6/load-test.js and adjust from there. A single
+# worker (the old default) serializes every request behind whichever one is
+# in flight — confirmed by a load test where p95 latency went from ~450ms at
+# 20 concurrent users to ~4.5s (with some requests over 30s) at 50.
+ExecStart=/opt/undergroundradio/venv/bin/uvicorn ug_radio_django.asgi:application --host 127.0.0.1 --port 8000 --workers 4
 
 # NEON_* DB credentials are already read from the tracked ug_radio_django/.env
 # file via python-dotenv — no need to duplicate them here. JWT key paths default

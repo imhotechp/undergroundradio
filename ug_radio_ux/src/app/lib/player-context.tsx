@@ -62,6 +62,14 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [queue.length]);
 
   const playPrevious = useCallback(() => {
+    // standard media-player behavior: restart the current track if it's
+    // already partway through, only skip back to the previous track if
+    // we're still near the start
+    const audio = audioRef.current;
+    if (audio && audio.currentTime > 3) {
+      audio.currentTime = 0;
+      return;
+    }
     setCurrentIndex((i) => (i !== null && i > 0 ? i - 1 : i));
   }, []);
 
@@ -141,7 +149,11 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     });
   }, [currentTrack]);
 
-  // lock-screen hardware controls (play/pause/seek/skip)
+  // lock-screen hardware controls (play/pause/seek/skip). Deliberately not
+  // registering seekbackward/seekforward (±10s skip): iOS shows either that
+  // pair or previoustrack/nexttrack on the lock screen, not both, and
+  // registering both had it default to the skip-10s pair — leaving them
+  // unset makes it fall back to previous/next track instead.
   useEffect(() => {
     if (typeof navigator === "undefined" || !("mediaSession" in navigator)) return;
     const audio = audioRef.current;
@@ -152,20 +164,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
     navigator.mediaSession.setActionHandler("seekto", (details) => {
       if (audio && details.seekTime != null) audio.currentTime = details.seekTime;
     });
-    navigator.mediaSession.setActionHandler("seekbackward", (details) => {
-      if (audio) audio.currentTime = Math.max(0, audio.currentTime - (details.seekOffset ?? 10));
-    });
-    navigator.mediaSession.setActionHandler("seekforward", (details) => {
-      if (audio) audio.currentTime = audio.currentTime + (details.seekOffset ?? 10);
-    });
     return () => {
       navigator.mediaSession.setActionHandler("play", null);
       navigator.mediaSession.setActionHandler("pause", null);
       navigator.mediaSession.setActionHandler("previoustrack", null);
       navigator.mediaSession.setActionHandler("nexttrack", null);
       navigator.mediaSession.setActionHandler("seekto", null);
-      navigator.mediaSession.setActionHandler("seekbackward", null);
-      navigator.mediaSession.setActionHandler("seekforward", null);
     };
   }, [playNext, playPrevious]);
 
