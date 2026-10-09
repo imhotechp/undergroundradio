@@ -466,7 +466,12 @@ class LibraryView(APIView):
         if not results:
             request.user.pending_song_token = None
             request.user.save(update_fields=['pending_song_token'])
-            return Response({"song(s)": "already in library"})
+            # `added: False` lets mp3juug's /musicv2 tell a genuine delivery
+            # apart from a no-op — without it, redeeming a link against an
+            # account that already has these songs still returned 200,
+            # which mp3juug's response.ok check treated as a real success
+            # and burned the one-time link/card for nothing.
+            return Response({"song(s)": "already in library", "added": False})
 
         # same thing for library.. Library.coverArt is one scalar cover per
         # playlist, not per-song — cover_arts is now always a list (even for
@@ -488,7 +493,7 @@ class LibraryView(APIView):
             serializer.save(username=request.user)
             request.user.pending_song_token = None
             request.user.save(update_fields=['pending_song_token'])
-            return Response({"song(s)": "should have added to library"})
+            return Response({"song(s)": "should have added to library", "added": True})
         else:
             print(serializer.errors)
             return Response({"error": 'something didnt parse right'}, status=400)
