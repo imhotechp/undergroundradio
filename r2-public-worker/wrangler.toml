@@ -2,12 +2,13 @@
 # Or via the Cloudflare dashboard's Git integration, with this directory set
 # as the project's Root directory.
 #
-# After first deploy, the public URL is:
-#   https://mp3juug-r2-public.<your-account-subdomain>.workers.dev
-# (find <your-account-subdomain> under Workers & Pages > your account settings,
-# or just copy the URL Cloudflare shows after deploying)
+# `name` below must match the Worker's actual name on your Cloudflare
+# account (Workers & Pages > your worker > Settings), not just whatever was
+# written here — `wrangler deploy` creates a brand-new Worker under
+# whatever `name` says instead of updating the real one if they don't match.
+# Currently deployed at undergroundradio-coverart-deploy.jolly-term-62bf.workers.dev.
 
-name = "mp3juug-r2-public"
+name = "undergroundradio-coverart-deploy"
 main = "src/worker.js"
 compatibility_date = "2026-01-01"
 
