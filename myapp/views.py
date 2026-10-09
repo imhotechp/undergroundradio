@@ -185,10 +185,12 @@ class AccountView(APIView):
         send_welcome_email(user)
 
         if token:
+            user.pending_song_token = token
+            user.save(update_fields=['pending_song_token'])
             notify_mp3juug(token, user.username, user.email, access_token)
 
         return Response({"access": access_token, "refresh": refresh_token})
-    
+
 # Login. Also doubles as the /musicv2?token=... entry point for a returning
 # user — same as AccountView, if a token is present the song it references
 # gets attached via the mp3juug.com notification below.
@@ -197,7 +199,11 @@ class LoginView(APIView):
     throttle_scope = 'auth'
 
     def post(self, request):
-        username = request.data.get("username")
+        # Usernames are always stored lowercased (see AccountSerializer.validate
+        # and MeView.patch) — Postgres text equality is case-sensitive, so without
+        # this, a mismatched case (e.g. a mobile keyboard auto-capitalizing the
+        # first letter) looks exactly like a wrong password from the user's side.
+        username = (request.data.get("username") or "").strip().lower()
         password = request.data.get("password")
         token = request.query_params.get('token')
         user = authenticate(username=username, password=password)
@@ -210,6 +216,8 @@ class LoginView(APIView):
         access_token = str(jwt.access_token)
 
         if token:
+            user.pending_song_token = token
+            user.save(update_fields=['pending_song_token'])
             notify_mp3juug(token, user.username, user.email, access_token)
 
         return Response({"access": access_token, "refresh": refresh_token})
@@ -223,7 +231,7 @@ class PasswordResetRequestView(APIView):
     throttle_scope = 'auth'
 
     def post(self, request):
-        username = (request.data.get('username') or '').strip()
+        username = (request.data.get('username') or '').strip().lower()
         if username:
             user = User.objects.filter(username=username).first()
             if user and user.email:
@@ -304,16 +312,48 @@ class SongView(APIView):
         return Response({"detail": "Not implemented yet."}, status=501)
 
 
+def _as_list(value, count):
+    """Normalizes a per-song field that may arrive as either a bare scalar
+    (the convention artist_name/email already require for a single-song
+    call) or a list (one entry per song in `song`). Used to come in as a
+    scalar got blindly indexed below (urls[i]) — which, for a string, indexes
+    into its individual *characters* instead of raising, silently truncating
+    e.g. a url down to its first letter. Returns None when a scalar can't be
+    unambiguously mapped onto more than one song."""
+    if isinstance(value, list):
+        return value
+    if value in (None, ''):
+        return []
+    if count == 1:
+        return [value]
+    return None
+
+
 class LibraryView(APIView):
     # Default IsAuthenticated (see REST_FRAMEWORK settings) — JWTAuthentication
     # already verified the token and set request.user before this runs, so the
     # library being modified is always the caller's own, never a client-supplied one.
     def post(self, request):
+        # Redeeming a song requires the exact mp3juug.com token issued to this
+        # account's most recent signup/login (see AccountView/LoginView) —
+        # without this, any authenticated user could POST arbitrary song data
+        # into their own library (and the shared Song table) with no relation
+        # to a real token hand-off at all. Cleared on success below so a
+        # token can't be replayed once redeemed; left intact on a validation
+        # error so a genuinely malformed delivery attempt can be retried.
+        token = request.query_params.get('token') or request.data.get('token')
+        if not token or not request.user.pending_song_token or token != request.user.pending_song_token:
+            return Response({'error': 'Invalid or missing token.'}, status=403)
+
         songs = request.data.get('song')
         if not isinstance(songs, list) or not songs:
             return Response({'error': 'song must be a non-empty list.'}, status=400)
-        urls = request.data.get('url') or []
-        durations = request.data.get('duration') or []
+        urls = _as_list(request.data.get('url'), len(songs))
+        if urls is None:
+            return Response({'error': 'url must be a list matching song when adding multiple songs.'}, status=400)
+        durations = _as_list(request.data.get('duration'), len(songs))
+        if durations is None:
+            return Response({'error': 'duration must be a list matching song when adding multiple songs.'}, status=400)
         results = []
         # Save each song individually since request song param is []
         for i, song_value in enumerate(songs):
@@ -380,6 +420,8 @@ class LibraryView(APIView):
             results.append(obj_pk)
 
         if not results:
+            request.user.pending_song_token = None
+            request.user.save(update_fields=['pending_song_token'])
             return Response({"song(s)": "already in library"})
 
         # same thing for library..
@@ -389,6 +431,8 @@ class LibraryView(APIView):
         if serializer.is_valid():
             # User object is foreign key to library table so we include
             serializer.save(username=request.user)
+            request.user.pending_song_token = None
+            request.user.save(update_fields=['pending_song_token'])
             return Response({"song(s)": "should have added to library"})
         else:
             print(serializer.errors)

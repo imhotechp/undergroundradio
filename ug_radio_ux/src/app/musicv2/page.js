@@ -168,6 +168,9 @@ function MusicV2Form() {
             id="username"
             name="username"
             autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
             value={username}
             onChange={updateField(setUsername, "username")}
             required

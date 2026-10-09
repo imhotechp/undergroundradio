@@ -18,6 +18,13 @@ class User(AbstractUser):
     # {bg, fg, navBg, accent} hex colors — empty dict means "no custom theme
     # saved yet", distinct from an explicit reset to defaults
     theme = models.JSONField(default=dict, blank=True)
+    # The mp3juug.com ?token=... from this user's most recent signup/login
+    # that carried one — LibraryView (/add/) requires this to match before
+    # accepting a song, and clears it on success, so redeeming a song into a
+    # library requires having actually gone through that token hand-off
+    # (once) rather than any authenticated user being able to POST arbitrary
+    # song data to their own library at will.
+    pending_song_token = models.CharField(max_length=255, blank=True, null=True)
 
 #. Multiple users can have multiple libraries (like playlists)
 class Library(models.Model):
