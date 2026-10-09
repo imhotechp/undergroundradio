@@ -333,10 +333,10 @@ class SongView(APIView):
 def _as_list(value, count):
     """Normalizes a per-song field that may arrive as either a bare scalar
     (the convention artist_name/email already require for a single-song
-    call) or a list (one entry per song in `song`). Used to come in as a
-    scalar got blindly indexed below (urls[i]) — which, for a string, indexes
-    into its individual *characters* instead of raising, silently truncating
-    e.g. a url down to its first letter. Returns None when a scalar can't be
+    call) or a list (one entry per song in `song`). A scalar used to get
+    blindly indexed below (urls[i]) — which, for a string, indexes into its
+    individual *characters* instead of raising, silently truncating e.g. a
+    url down to its first letter. Returns None when a scalar can't be
     unambiguously mapped onto more than one song."""
     if isinstance(value, list):
         return value
@@ -372,6 +372,9 @@ class LibraryView(APIView):
         durations = _as_list(request.data.get('duration'), len(songs))
         if durations is None:
             return Response({'error': 'duration must be a list matching song when adding multiple songs.'}, status=400)
+        cover_arts = _as_list(request.data.get('coverArt'), len(songs))
+        if cover_arts is None:
+            return Response({'error': 'coverArt must be a list matching song when adding multiple songs.'}, status=400)
         results = []
         # Save each song individually since request song param is []
         for i, song_value in enumerate(songs):
@@ -379,6 +382,7 @@ class LibraryView(APIView):
             data = request.data.copy()
             data['song'] = song_value
             data['url'] = urls[i] if i < len(urls) else ''
+            data['coverArt'] = cover_arts[i] if i < len(cover_arts) else ''
             # parse_duration('') parses as a real 0:00:00, not an error — omit
             # the key entirely when there's no value instead of storing a fake
             # zero duration for a song whose length just wasn't captured
@@ -442,9 +446,12 @@ class LibraryView(APIView):
             request.user.save(update_fields=['pending_song_token'])
             return Response({"song(s)": "already in library"})
 
-        # same thing for library..
+        # same thing for library.. Library.coverArt is one scalar cover per
+        # playlist, not per-song — cover_arts is now always a list (even for
+        # one song), so use the first song's as this playlist's cover.
         data = request.data.copy()
         data['song'] = results
+        data['coverArt'] = cover_arts[0] if cover_arts else ''
         serializer = LibrarySerializer(data=data)
         if serializer.is_valid():
             # User object is foreign key to library table so we include
