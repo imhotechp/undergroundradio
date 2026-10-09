@@ -391,6 +391,16 @@ class LibraryView(APIView):
             # entire song add, even though duration is just optional
             # metadata. Drop it instead of blocking the song.
             duration_value = durations[i] if i < len(durations) else ''
+            if duration_value:
+                # mp3juug sends a raw JS float (audio.duration), which often
+                # carries far more decimal digits than parse_duration's
+                # microsecond precision (6 digits) can match — e.g.
+                # 116.32326530612245 — making an otherwise-valid duration
+                # look unparseable. Round first.
+                try:
+                    duration_value = round(float(duration_value), 6)
+                except (TypeError, ValueError):
+                    pass
             if duration_value and parse_duration(str(duration_value)) is not None:
                 data['duration'] = duration_value
             else:
