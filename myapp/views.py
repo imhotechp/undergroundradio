@@ -436,6 +436,15 @@ class LibraryView(APIView):
                 if update_fields:
                     existing_song.save(update_fields=update_fields)
             else:
+                # No resolvable stream URL (e.g. the Upload row this link
+                # pointed at was deleted after the link was created) — skip
+                # this song rather than create a library entry that looks
+                # playable but isn't. Dropped, not a 400: unlike a missing
+                # artist_name (fixable by re-uploading), there's no retry
+                # that would ever fix a URL that genuinely no longer exists.
+                if not data.get('url'):
+                    print('skipping song with no resolvable url:', repr(song_value), flush=True)
+                    continue
                 song_serializer = SongSerializer(data=data)
                 if song_serializer.is_valid():
                     # save song(s) to song table
