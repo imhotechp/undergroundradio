@@ -452,6 +452,14 @@ class LibraryView(APIView):
         data = request.data.copy()
         data['song'] = results
         data['coverArt'] = cover_arts[0] if cover_arts else ''
+        # Library.name defaults to the literal string "Playlist001" — every
+        # playlist a user ever got was named exactly that with no sequence
+        # number, since nothing here ever overrode it. Number sequentially
+        # per user instead. (Count-then-insert, not atomic — two concurrent
+        # redemptions for the same user could in theory land on the same
+        # number; low-risk for how infrequently this fires.)
+        next_number = Library.objects.filter(username=request.user).count() + 1
+        data['name'] = f"Playlist{next_number:03d}"
         serializer = LibrarySerializer(data=data)
         if serializer.is_valid():
             # User object is foreign key to library table so we include
