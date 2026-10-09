@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Link from "next/link";
 import { ApiError, login, redeemToken, signup } from "@/app/lib/api";
 import { getAccessToken } from "@/app/lib/auth";
 import { StatusCard } from "@/app/components/library-components/StatusCard";
@@ -169,6 +170,32 @@ function MusicV2Form() {
 
   if (redeemState === "redeeming") {
     return <StatusCard>Adding your song to your library...</StatusCard>;
+  }
+
+  // Falling through to the signup/login form below would show it to someone
+  // who's already logged in — confusing, since they already have an
+  // account. They got here with a valid session, so send them somewhere
+  // useful instead of a form asking them to sign up again.
+  if (redeemState === "failed") {
+    return (
+      <div className="flex min-h-dvh flex-col items-center justify-center px-6 py-12 text-center text-[var(--theme-fg)]">
+        <div className="mx-auto w-full max-w-sm space-y-3 rounded-2xl border border-white/10 bg-[rgb(var(--theme-bg-rgb)/70%)] p-6 shadow-2xl backdrop-blur-xl">
+          <h1 className="text-xl font-bold tracking-tight">Couldn&apos;t add that song</h1>
+          <p className="text-sm text-red-400">{error}</p>
+          <p className="text-sm text-white/60">
+            You&apos;re still signed in — try opening the link again, or check your
+            library in case it actually went through.
+          </p>
+          <Link
+            href="/home"
+            className="mt-2 inline-block w-full rounded-lg py-2.5 text-center font-medium text-white"
+            style={{ backgroundColor: "var(--theme-accent)" }}
+          >
+            Go to your library
+          </Link>
+        </div>
+      </div>
+    );
   }
 
   return (

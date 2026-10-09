@@ -418,19 +418,22 @@ class LibraryView(APIView):
             ).first()
             if existing_song:
                 obj_pk = existing_song.pk
-                # backfill fields that were blank on the existing row (e.g. it
-                # was created before `url`/`duration` existed) with fresher
-                # incoming data
+                # Refresh with fresher incoming data whenever a non-empty
+                # value is given — not just when the existing field is
+                # blank. Used to only backfill gaps, which meant an artist
+                # re-uploading a fixed/better version of a song (same
+                # title/artist/email) could never get the delivered URL to
+                # actually update, since the original was already non-blank.
                 update_fields = []
-                if not existing_song.url and data.get('url'):
+                if data.get('url') and existing_song.url != data['url']:
                     existing_song.url = data['url']
                     update_fields.append('url')
-                if not existing_song.coverArt and data.get('coverArt'):
+                if data.get('coverArt') and existing_song.coverArt != data['coverArt']:
                     existing_song.coverArt = data['coverArt']
                     update_fields.append('coverArt')
-                if not existing_song.duration and data.get('duration'):
+                if data.get('duration'):
                     parsed = parse_duration(str(data['duration']))
-                    if parsed is not None:
+                    if parsed is not None and existing_song.duration != parsed:
                         existing_song.duration = parsed
                         update_fields.append('duration')
                 if update_fields:
