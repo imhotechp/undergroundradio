@@ -1,8 +1,10 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ApiError, login, signup } from "@/app/lib/api";
+import { ApiError, login, redeemToken, signup } from "@/app/lib/api";
+import { getAccessToken } from "@/app/lib/auth";
+import { StatusCard } from "@/app/components/library-components/StatusCard";
 
 export default function MusicV2Page() {
   return (
@@ -54,6 +56,12 @@ function MusicV2Form() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
 
+  // idle: show the form (default/not-applicable) | redeeming: already logged
+  // in, picking up the token on the existing session | failed: that redeem
+  // attempt errored, fall back to the form so they can still get the song
+  // via a normal login
+  const [redeemState, setRedeemState] = useState("idle");
+
   const [mode, setMode] = useState("signup"); // signup | login
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -62,6 +70,24 @@ function MusicV2Form() {
   const [error, setError] = useState("");
   const [fieldErrors, setFieldErrors] = useState({});
   const [submitting, setSubmitting] = useState(false);
+
+  // Checked in an effect (client-only) rather than during initial state so
+  // server and client render the same thing on first paint — getAccessToken
+  // reads localStorage, which doesn't exist during SSR.
+  useEffect(() => {
+    if (!token || !getAccessToken()) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setRedeemState("redeeming");
+    redeemToken(token)
+      .then(() => {
+        router.push("/home?justJoined=1");
+      })
+      .catch((err) => {
+        setRedeemState("failed");
+        setError(err.message ?? "Something went wrong.");
+      });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   function toggleMode() {
     setError("");
@@ -139,6 +165,10 @@ function MusicV2Form() {
         </div>
       </div>
     );
+  }
+
+  if (redeemState === "redeeming") {
+    return <StatusCard>Adding your song to your library...</StatusCard>;
   }
 
   return (

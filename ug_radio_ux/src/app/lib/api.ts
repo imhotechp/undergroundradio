@@ -201,3 +201,10 @@ export async function updateTheme(theme: Partial<ThemeColors>): Promise<{ theme:
 export async function updateUsername(username: string): Promise<{ username: string }> {
   return apiFetch("/me/", { method: "PATCH", body: JSON.stringify({ username }) });
 }
+
+// Redeems a /musicv2?token=... link using the caller's existing session,
+// for when they're already logged in and shouldn't have to re-enter
+// credentials just to pick up the song that link references.
+export async function redeemToken(token: string): Promise<{ detail: string }> {
+  return apiFetch(`/musicv2/redeem/?token=${encodeURIComponent(token)}`, { method: "POST" });
+}

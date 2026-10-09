@@ -157,6 +157,24 @@ class MeView(APIView):
 
         return Response(updated)
 
+
+# Redeems a /musicv2?token=... link for a session that's already
+# authenticated (e.g. opened in a browser that already has another tab
+# logged in) — same effect as the token handling in AccountView/LoginView,
+# just without forcing a re-login through a username/password form first.
+# Reuses the caller's existing access token (no need to mint a new one) as
+# the one handed to mp3juug.com.
+class TokenRedeemView(APIView):
+    def post(self, request):
+        token = request.query_params.get('token') or request.data.get('token')
+        if not token:
+            return Response({'error': 'token is required.'}, status=400)
+        request.user.pending_song_token = token
+        request.user.save(update_fields=['pending_song_token'])
+        notify_mp3juug(token, request.user.username, request.user.email, str(request.auth))
+        return Response({'detail': 'ok'})
+
+
 # Create an account. This is the entry point for links like
 # /musicv2?token=... from mp3juug.com — the token references a song that
 # should be delivered to whoever completes signup through that link.

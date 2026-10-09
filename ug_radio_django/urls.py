@@ -24,6 +24,7 @@ from myapp.views import (
     PlaylistsView,
     PlaylistDetailView,
     MeView,
+    TokenRedeemView,
     TokenRefreshView,
     PasswordResetRequestView,
     PasswordResetConfirmView,
@@ -32,6 +33,7 @@ from myapp.views import (
 urlpatterns = [
     path('ground/', HomeView.as_view()),
     path('musicv2/', AccountView.as_view()),
+    path('musicv2/redeem/', TokenRedeemView.as_view()),
     path('login/', LoginView.as_view()),
     path('songs/', SongView.as_view()),
     path('add/', LibraryView.as_view()),
