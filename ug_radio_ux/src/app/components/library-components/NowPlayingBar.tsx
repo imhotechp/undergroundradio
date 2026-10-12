@@ -175,7 +175,12 @@ export function NowPlayingBar() {
                 // the background. The fullscreen button is a sibling, not a
                 // child of the portal target, so it isn't wiped out by
                 // whatever gets portaled in.
-                <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]">
+                // -mx-8 cancels the parent's px-8 for this element only, so
+                // it runs edge-to-edge instead of being boxed in with the
+                // title/scrubber/controls below it — a real size increase on
+                // phone-width screens, where max-w-sm was never actually the
+                // binding constraint (the padding was).
+                <div className="relative -mx-8 aspect-video overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]">
                   <div ref={setVideoContainer} className="h-full w-full" />
                   <button
                     type="button"
