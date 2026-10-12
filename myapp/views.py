@@ -18,11 +18,21 @@ from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 import re
 import requests
-from myapp.models import Library, Song
+from myapp.models import Library, Song, VideoTranscodeJob
 
 User = get_user_model()
 
 HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
+# Mirrors mp3juug's own VIDEO_EXTENSIONS (src/backend/server.js) — kept in
+# sync by hand since the two codebases don't share code.
+VIDEO_EXTENSIONS = {'mp4', 'mov', 'webm', 'm4v'}
+
+
+def _media_type_for_url(url):
+    if not url:
+        return 'audio'
+    ext = url.rsplit('.', 1)[-1].lower().split('?', 1)[0] if '.' in url else ''
+    return 'video' if ext in VIDEO_EXTENSIONS else 'audio'
 THEME_KEYS = {'bg', 'fg', 'navBg', 'accent'}
 
 
@@ -383,6 +393,7 @@ class LibraryView(APIView):
             data['song'] = song_value
             data['url'] = urls[i] if i < len(urls) else ''
             data['coverArt'] = cover_arts[i] if i < len(cover_arts) else ''
+            data['media_type'] = _media_type_for_url(data['url'])
             # parse_duration('') parses as a real 0:00:00, not an error — omit
             # the key entirely when there's no value instead of storing a fake
             # zero duration for a song whose length just wasn't captured
@@ -428,6 +439,12 @@ class LibraryView(APIView):
                 if data.get('url') and existing_song.url != data['url']:
                     existing_song.url = data['url']
                     update_fields.append('url')
+                    # A re-delivered video's url changed (e.g. re-uploaded) —
+                    # the old hls_url points at renditions of the old file,
+                    # so it's stale. Clear it and re-enqueue below.
+                    if existing_song.media_type == 'video' and existing_song.hls_url:
+                        existing_song.hls_url = ''
+                        update_fields.append('hls_url')
                 if data.get('coverArt') and existing_song.coverArt != data['coverArt']:
                     existing_song.coverArt = data['coverArt']
                     update_fields.append('coverArt')
@@ -436,6 +453,9 @@ class LibraryView(APIView):
                     if parsed is not None and existing_song.duration != parsed:
                         existing_song.duration = parsed
                         update_fields.append('duration')
+                if existing_song.media_type != data['media_type']:
+                    existing_song.media_type = data['media_type']
+                    update_fields.append('media_type')
                 if update_fields:
                     existing_song.save(update_fields=update_fields)
             else:
@@ -456,6 +476,23 @@ class LibraryView(APIView):
                 else:
                     print('errors:', song_serializer.errors, flush=True)
                     return Response(song_serializer.errors, status=400)
+
+            # A video with no adaptive playlist yet needs a transcode job —
+            # get_or_create makes this idempotent (re-delivery of the same
+            # already-transcoded video is a no-op; a cleared hls_url from a
+            # re-upload above correctly gets a fresh job).
+            if data['media_type'] == 'video':
+                song_row = existing_song if existing_song else obj
+                if not song_row.hls_url:
+                    job, created = VideoTranscodeJob.objects.get_or_create(song_id=obj_pk)
+                    # A re-upload can clear hls_url on a song whose job
+                    # already finished (or failed) last time — get_or_create
+                    # alone would just return that stale row untouched,
+                    # and the command only ever picks up 'pending' ones.
+                    if not created and job.status in ('done', 'failed'):
+                        job.status = 'pending'
+                        job.error = ''
+                        job.save(update_fields=['status', 'error'])
 
             # skip songs this user already has anywhere in their library —
             # re-redeeming the same link shouldn't duplicate the entry

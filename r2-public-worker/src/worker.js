@@ -32,7 +32,15 @@ const CONTENT_TYPES = {
   png: "image/png",
   gif: "image/gif",
   webp: "image/webp",
+  m3u8: "application/vnd.apple.mpegurl",
+  ts: "video/mp2t",
 };
+
+// Adaptive video (hls.js) fetches the manifest and every segment itself via
+// JS rather than a plain <video src> the browser loads natively — that
+// needs real CORS, not just this. Safari/iOS plays HLS natively and never
+// hits this path at all.
+const ALLOWED_ORIGIN = "https://undergroundradio.us";
 
 function basename(key) {
   return key.split("/").pop() || "";
@@ -82,6 +90,11 @@ function parseRange(rangeHeader, size) {
 function securityHeaders(headers) {
   headers.set("X-Content-Type-Options", "nosniff");
   headers.set("Content-Security-Policy", "default-src 'none'; sandbox");
+  headers.set("Access-Control-Allow-Origin", ALLOWED_ORIGIN);
+  // Content-Range/Content-Length aren't readable by cross-origin JS unless
+  // explicitly exposed — hls.js needs them to confirm a partial response
+  // actually covered the byte range it asked for.
+  headers.set("Access-Control-Expose-Headers", "Content-Length, Content-Range, Accept-Ranges, ETag");
   return headers;
 }
 
@@ -114,6 +127,17 @@ function buildHeaders({ contentType, key, etag, size, range }) {
 
 export default {
   async fetch(request, env) {
+    // Range on a cross-origin fetch (hls.js's segment requests) can trigger
+    // a CORS preflight — answer it directly rather than falling into the
+    // 405 below, which has no CORS headers a preflight would accept.
+    if (request.method === "OPTIONS") {
+      const headers = securityHeaders(new Headers());
+      headers.set("Access-Control-Allow-Methods", "GET, HEAD, OPTIONS");
+      headers.set("Access-Control-Allow-Headers", "Range");
+      headers.set("Access-Control-Max-Age", "86400");
+      return new Response(null, { status: 204, headers });
+    }
+
     if (request.method !== "GET" && request.method !== "HEAD") {
       return errorResponse(405, "Method not allowed");
     }

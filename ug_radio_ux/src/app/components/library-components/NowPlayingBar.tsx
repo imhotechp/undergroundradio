@@ -20,7 +20,7 @@ function hashIndex(key: string) {
 }
 
 export function NowPlayingBar() {
-  const { currentTrack, isPaused, currentTime, duration, togglePlay, seek, playNext, playPrevious } =
+  const { currentTrack, isPaused, currentTime, duration, togglePlay, seek, playNext, playPrevious, setVideoContainer } =
     usePlayer();
   // while actively dragging, show the dragged position instead of currentTime —
   // currentTime only updates on the audio's next "timeupdate" tick, which lags
@@ -144,13 +144,25 @@ export function NowPlayingBar() {
             </div>
 
             <div className="flex flex-1 flex-col items-center justify-center gap-8 px-8">
-              <TrackArt
-                index={hashIndex(currentTrack.song + currentTrack.artist_name)}
-                size={320}
-                src={currentTrack.coverArt}
-                alt={currentTrack.song}
-                className="max-w-full rounded-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]"
-              />
+              {currentTrack.media_type === "video" ? (
+                // The actual <video> element lives in player-context and is
+                // portaled in here — ref callback claims it; React calls it
+                // with null on unmount (sheet closes, or the track changes to
+                // non-video), which releases it back to its default hidden
+                // slot where it keeps playing audio-only in the background.
+                <div
+                  ref={setVideoContainer}
+                  className="aspect-video w-full max-w-sm overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]"
+                />
+              ) : (
+                <TrackArt
+                  index={hashIndex(currentTrack.song + currentTrack.artist_name)}
+                  size={320}
+                  src={currentTrack.coverArt}
+                  alt={currentTrack.song}
+                  className="max-w-full rounded-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]"
+                />
+              )}
 
               <div className="w-full max-w-sm min-w-0 text-center">
                 <p className="truncate text-2xl font-bold text-[var(--theme-fg)]">{currentTrack.song}</p>

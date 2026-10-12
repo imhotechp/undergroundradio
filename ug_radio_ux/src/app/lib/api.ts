@@ -13,6 +13,11 @@ export interface Track {
   duration?: string | null;
   plays?: number | null;
   nft_status?: boolean | null;
+  media_type?: "audio" | "video";
+  // Adaptive HLS master playlist — set once a video's background transcode
+  // finishes. Blank until then; the raw `url` is directly playable (single
+  // quality) in the meantime.
+  hls_url?: string;
 }
 
 export interface Playlist {

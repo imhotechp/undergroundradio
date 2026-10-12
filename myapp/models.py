@@ -13,6 +13,33 @@ class Song(models.Model):
     url = models.CharField(blank=True)  # playable stream URL (R2 via the public Worker)
     plays = models.IntegerField(null=True, blank=True)
     nft_status = models.BooleanField(null=True, blank=True)
+    media_type = models.CharField(
+        max_length=10,
+        choices=[('audio', 'audio'), ('video', 'video')],
+        default='audio',
+    )
+    # Adaptive-bitrate master playlist URL for a video, set once its
+    # VideoTranscodeJob finishes — blank (and irrelevant) for audio, and
+    # blank-but-pending for a video whose transcode hasn't finished yet, in
+    # which case the player falls back to the raw `url` directly.
+    hls_url = models.CharField(blank=True)
+
+
+class VideoTranscodeJob(models.Model):
+    song = models.OneToOneField(Song, on_delete=models.CASCADE, related_name='transcode_job')
+    status = models.CharField(
+        max_length=10,
+        choices=[
+            ('pending', 'pending'),
+            ('processing', 'processing'),
+            ('done', 'done'),
+            ('failed', 'failed'),
+        ],
+        default='pending',
+    )
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 class User(AbstractUser):
     phone_number = models.CharField(max_length=20, blank=True, null=True)
     # {bg, fg, navBg, accent} hex colors — empty dict means "no custom theme

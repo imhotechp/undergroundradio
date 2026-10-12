@@ -58,6 +58,18 @@ if SENTRY_DSN:
         send_default_pii=False,
     )
 
+# Write credential for the shared 'emerald' R2 bucket (same bucket
+# r2-public-worker serves and mp3juug's own upload already writes into) —
+# used only by `manage.py process_transcode_jobs` to upload HLS output.
+# Endpoint defaults to the same account mp3juug's save.js already points at.
+R2_ACCESS_KEY_ID = getenv('R2_ACCESS_KEY_ID')
+R2_SECRET_ACCESS_KEY = getenv('R2_SECRET_ACCESS_KEY')
+R2_ENDPOINT = getenv('R2_ENDPOINT', 'https://8ea912cebb5ae25958cf7fb7892d45c4.r2.cloudflarestorage.com')
+R2_BUCKET = getenv('R2_BUCKET', 'emerald')
+# Public base URL for reading back what gets uploaded — the same Worker
+# everything else (songs, cover art) is already served through.
+R2_PUBLIC_BASE_URL = getenv('R2_PUBLIC_BASE_URL', 'https://undergroundradio-coverart-deploy.jolly-term-62bf.workers.dev')
+
 ALLOWED_HOSTS = [
     '127.0.0.1',
     '72.61.75.183',

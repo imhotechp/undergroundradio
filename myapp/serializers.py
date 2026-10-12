@@ -84,6 +84,8 @@ class SongSerializer(serializers.ModelSerializer):
     url = serializers.CharField(required=False, allow_blank=True, default='')
     plays = serializers.IntegerField(required=False)
     nft_status = serializers.BooleanField(default=False)
+    media_type = serializers.ChoiceField(choices=['audio', 'video'], required=False, default='audio')
+    hls_url = serializers.CharField(required=False, allow_blank=True, default='')
 
     class Meta:
         model = Song
@@ -97,7 +99,9 @@ class SongSerializer(serializers.ModelSerializer):
             'lyrics',
             'duration',
             'plays',
-            'nft_status'
+            'nft_status',
+            'media_type',
+            'hls_url',
             )
 
         

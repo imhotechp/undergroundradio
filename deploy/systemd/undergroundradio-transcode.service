@@ -1,0 +1,24 @@
+[Unit]
+Description=undergroundradio video transcode (one pending job per run)
+After=network.target
+
+[Service]
+Type=oneshot
+WorkingDirectory=/srv/backend
+# Same venv/settings as undergroundradio-backend.service — DJANGO_DEBUG and
+# DJANGO_SECRET_KEY must match whatever's actually set there (never the
+# tracked .env, same reasoning as that unit). JWT key paths and NEON_* also
+# come from the same places (tracked .env / /srv/mp3*.key defaults).
+#
+# Also needs R2_ACCESS_KEY_ID / R2_SECRET_ACCESS_KEY — a write credential
+# for the 'emerald' bucket, generated in the Cloudflare dashboard. These
+# alone are safe to put in the tracked ug_radio_django/.env unlike
+# DEBUG/SECRET_KEY, since the risk here is "someone writes bad files into a
+# bucket we already serve publicly," not account takeover.
+Environment=DJANGO_DEBUG=False
+# EDIT: must be the exact same value as undergroundradio-backend.service's
+Environment=DJANGO_SECRET_KEY=REPLACE_WITH_A_REAL_SECRET_NEVER_COMMITTED
+ExecStart=/srv/backend/venv/bin/python manage.py process_transcode_jobs
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,16 @@
+[Unit]
+Description=Run undergroundradio-transcode.service every 30s
+
+[Timer]
+# A timer instead of a hand-rolled infinite-loop process in the .service
+# itself — systemd already owns restart/scheduling for everything else
+# here, no reason to reinvent it for this one job. OnUnitActiveSec counts
+# from when the *previous run finished*, not a fixed clock, so a job that
+# takes longer than 30s (likely, for real video) just delays the next tick
+# rather than overlapping with it — process_transcode_jobs only ever claims
+# one job per invocation anyway, so this is a safety margin, not a load-bearing guarantee.
+OnBootSec=30s
+OnUnitActiveSec=30s
+
+[Install]
+WantedBy=timers.target
