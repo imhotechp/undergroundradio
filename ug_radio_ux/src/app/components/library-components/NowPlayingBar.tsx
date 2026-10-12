@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { TrackArt } from "@/app/components/library-components/track-art";
 import {
   ChevronDownIcon,
+  FullscreenIcon,
   PauseIcon,
   PlayIcon,
   SkipNextIcon,
@@ -19,9 +20,30 @@ function hashIndex(key: string) {
   return Math.abs(hash);
 }
 
+// Standard Fullscreen API works for desktop/Android Chrome, but iOS Safari
+// never implemented requestFullscreen() on arbitrary elements — the only
+// way to get real fullscreen video there is webkitEnterFullscreen(), which
+// hands off to the OS's native video player chrome entirely (our own
+// controls don't run while it's active; that's expected, not a bug).
+function enterVideoFullscreen(video: HTMLVideoElement) {
+  const withWebkit = video as HTMLVideoElement & {
+    webkitEnterFullscreen?: () => void;
+    webkitRequestFullscreen?: () => void;
+  };
+  if (video.requestFullscreen) {
+    video.requestFullscreen().catch(() => {});
+  } else if (withWebkit.webkitEnterFullscreen) {
+    withWebkit.webkitEnterFullscreen();
+  } else if (withWebkit.webkitRequestFullscreen) {
+    withWebkit.webkitRequestFullscreen();
+  }
+}
+
 export function NowPlayingBar() {
-  const { currentTrack, isPaused, currentTime, duration, togglePlay, seek, playNext, playPrevious, setVideoContainer } =
-    usePlayer();
+  const {
+    currentTrack, isPaused, currentTime, duration,
+    togglePlay, seek, playNext, playPrevious, setVideoContainer, videoRef,
+  } = usePlayer();
   // while actively dragging, show the dragged position instead of currentTime —
   // currentTime only updates on the audio's next "timeupdate" tick, which lags
   // behind the pointer and makes the thumb jump/fight the drag otherwise
@@ -146,14 +168,26 @@ export function NowPlayingBar() {
             <div className="flex flex-1 flex-col items-center justify-center gap-8 px-8">
               {currentTrack.media_type === "video" ? (
                 // The actual <video> element lives in player-context and is
-                // portaled in here — ref callback claims it; React calls it
-                // with null on unmount (sheet closes, or the track changes to
-                // non-video), which releases it back to its default hidden
-                // slot where it keeps playing audio-only in the background.
-                <div
-                  ref={setVideoContainer}
-                  className="aspect-video w-full max-w-sm overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]"
-                />
+                // portaled into the inner div — ref callback claims it;
+                // React calls it with null on unmount (sheet closes, or the
+                // track changes to non-video), which releases it back to its
+                // default hidden slot where it keeps playing audio-only in
+                // the background. The fullscreen button is a sibling, not a
+                // child of the portal target, so it isn't wiped out by
+                // whatever gets portaled in.
+                <div className="relative aspect-video w-full max-w-sm overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]">
+                  <div ref={setVideoContainer} className="h-full w-full" />
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (videoRef.current) enterVideoFullscreen(videoRef.current);
+                    }}
+                    aria-label="Fullscreen"
+                    className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white"
+                  >
+                    <FullscreenIcon size={18} />
+                  </button>
+                </div>
               ) : (
                 <TrackArt
                   index={hashIndex(currentTrack.song + currentTrack.artist_name)}
