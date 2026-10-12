@@ -242,22 +242,24 @@ export function NowPlayingBar() {
             <div className="flex min-h-0 flex-1 flex-col px-8">
               {currentTrack.media_type === "video" ? (
                 <>
-                  {/* flex-1 + min-h-0 instead of aspect-video: lets the box
-                      grow to fill whatever vertical space the title/scrubber/
-                      controls below don't need, rather than being capped at
-                      16:9-of-width. The <video> itself (in player-context)
-                      uses object-contain, so it letterboxes/pillarboxes
-                      correctly inside whatever size this box ends up —
-                      -mx-8 still cancels the parent's horizontal padding so
-                      it's edge-to-edge, same as before.
+                  {/* flex-1 + min-h-0 instead of aspect-video: the box now
+                      fills essentially the whole remaining screen — title/
+                      scrubber/controls are an absolutely-positioned overlay
+                      INSIDE it (below), not a separate sibling block taking
+                      up its own space. The <video> itself (in player-context)
+                      uses object-contain, so it still letterboxes/
+                      pillarboxes correctly at whatever size the box ends up.
+                      -mx-8 cancels the parent's horizontal padding so it's
+                      edge-to-edge.
                       The actual <video> element lives in player-context and
                       is portaled into the inner div — ref callback claims
                       it; React calls it with null on unmount (sheet closes,
                       or the track changes to non-video), which releases it
                       back to its default hidden slot where it keeps playing
-                      audio-only in the background. The fullscreen button is
-                      a sibling, not a child of the portal target, so it
-                      isn't wiped out by whatever gets portaled in. */}
+                      audio-only in the background. The fullscreen button and
+                      the controls overlay are siblings, not children, of the
+                      portal target, so neither is wiped out by whatever gets
+                      portaled in. */}
                   <div className="relative -mx-8 min-h-0 flex-1 overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]">
                     <div ref={setVideoContainer} className="h-full w-full" />
                     <button
@@ -270,9 +272,13 @@ export function NowPlayingBar() {
                     >
                       <FullscreenIcon size={18} />
                     </button>
-                  </div>
-                  <div className="flex shrink-0 flex-col items-center gap-6 pt-6">
-                    {currentTrack && trackInfoAndControls(currentTrack)}
+                    {/* Gradient backdrop behind the floating controls — the
+                        video content underneath is arbitrary, so the title
+                        text and scrubber need guaranteed contrast rather
+                        than relying on whatever happens to be in frame. */}
+                    <div className="absolute inset-x-0 bottom-0 flex flex-col items-center gap-5 bg-gradient-to-t from-black/85 via-black/50 to-transparent px-6 pb-6 pt-14">
+                      {currentTrack && trackInfoAndControls(currentTrack)}
+                    </div>
                   </div>
                 </>
               ) : (
