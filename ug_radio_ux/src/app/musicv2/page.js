@@ -84,6 +84,18 @@ function MusicV2Form() {
         router.push("/home?justJoined=1");
       })
       .catch((err) => {
+        // A 401 here means the session we thought we had wasn't actually
+        // valid — apiFetch already cleared it after the refresh attempt
+        // also failed. Falling through to the signup/login form (instead
+        // of the dead-end "failed" screen below, which wrongly claims
+        // "you're still signed in") lets them create an account or log in
+        // fresh; `token` is still in the URL, so either one still redeems
+        // it via signup()/login() below.
+        if (err instanceof ApiError && err.status === 401) {
+          setRedeemState("idle");
+          setError("Your session expired — sign up or log in to add this song.");
+          return;
+        }
         setRedeemState("failed");
         setError(err.message ?? "Something went wrong.");
       });
