@@ -17,7 +17,11 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
 import re
+import time
+import functools
 import requests
+from django.db import connections
+from django.db.utils import OperationalError
 from myapp.models import Library, Song, VideoTranscodeJob
 
 User = get_user_model()
@@ -26,6 +30,29 @@ HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
 # Mirrors mp3juug's own VIDEO_EXTENSIONS (src/backend/server.js) — kept in
 # sync by hand since the two codebases don't share code.
 VIDEO_EXTENSIONS = {'mp4', 'mov', 'webm', 'm4v'}
+
+
+# Neon's pooled connection occasionally fails to establish at all (seen in
+# Sentry as "OperationalError: ... SSL SYSCALL error: EOF detected" from
+# inside psycopg's connect(), not a reused/stale connection — CONN_HEALTH_CHECKS
+# only validates reuse, it can't help here). That's a transient network blip
+# on Neon's or this VPS's side, not anything wrong with the request, and
+# since it fails before any query runs, nothing has been written yet —
+# retrying the whole view once, after forcing Django to drop the dead
+# connection object, is safe and turns an intermittent 500 (a real failed
+# delivery, from mp3juug's and the fan's perspective) into a slightly
+# slower success.
+def retry_on_db_connection_error(view_func):
+    @functools.wraps(view_func)
+    def wrapped(self, request, *args, **kwargs):
+        try:
+            return view_func(self, request, *args, **kwargs)
+        except OperationalError as exc:
+            print(f'retrying {request.path} after a DB connection error: {exc}', flush=True)
+            connections['default'].close()
+            time.sleep(0.5)
+            return view_func(self, request, *args, **kwargs)
+    return wrapped
 
 
 def _media_type_for_url(url):
@@ -175,6 +202,7 @@ class MeView(APIView):
 # Reuses the caller's existing access token (no need to mint a new one) as
 # the one handed to mp3juug.com.
 class TokenRedeemView(APIView):
+    @retry_on_db_connection_error
     def post(self, request):
         token = request.query_params.get('token') or request.data.get('token')
         if not token:
@@ -192,6 +220,7 @@ class AccountView(APIView):
     permission_classes = [AllowAny]
     throttle_scope = 'auth'
 
+    @retry_on_db_connection_error
     def post(self, request):
         token = request.query_params.get('token')
         serializer = AccountSerializer(data=request.data)
@@ -226,6 +255,7 @@ class LoginView(APIView):
     permission_classes = [AllowAny]
     throttle_scope = 'auth'
 
+    @retry_on_db_connection_error
     def post(self, request):
         # Usernames are always stored lowercased (see AccountSerializer.validate
         # and MeView.patch) — Postgres text equality is case-sensitive, so without
@@ -361,6 +391,12 @@ class LibraryView(APIView):
     # Default IsAuthenticated (see REST_FRAMEWORK settings) — JWTAuthentication
     # already verified the token and set request.user before this runs, so the
     # library being modified is always the caller's own, never a client-supplied one.
+    #
+    # Safe to retry whole: every write below is already idempotent by design
+    # (existing_song reuse, VideoTranscodeJob get_or_create, the Library
+    # dedup skip) — mp3juug itself relies on being able to retry a delivery
+    # ("open the link again") without double-adding anything.
+    @retry_on_db_connection_error
     def post(self, request):
         # Redeeming a song requires the exact mp3juug.com token issued to this
         # account's most recent signup/login (see AccountView/LoginView) —
