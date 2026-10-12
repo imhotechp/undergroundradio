@@ -59,6 +59,80 @@ export function NowPlayingBar() {
     if (!currentTrack) setExpanded(false);
   }, [currentTrack]);
 
+  // Shared between the video and audio branches below — title/artist,
+  // scrubber, and prev/play/next, unchanged either way. Takes `track`
+  // explicitly (rather than closing over `currentTrack` directly) so
+  // TypeScript keeps the non-null narrowing from the call site's `&&` guard.
+  function trackInfoAndControls(track: NonNullable<typeof currentTrack>) {
+    return (
+      <>
+        <div className="w-full max-w-sm min-w-0 text-center">
+          <p className="truncate text-2xl font-bold text-[var(--theme-fg)]">{track.song}</p>
+          <p className="truncate text-base text-white/50">{track.artist_name}</p>
+        </div>
+
+        <div className="w-full max-w-sm">
+          <div className="relative flex h-4 w-full items-center">
+            <div className="pointer-events-none absolute inset-x-0 h-0.5 w-full bg-white/10">
+              <div
+                className="h-full bg-[var(--theme-accent)] transition-[width]"
+                style={{ width: `${progress * 100}%` }}
+              />
+            </div>
+            <input
+              type="range"
+              aria-label="Seek"
+              min={0}
+              max={duration || 0}
+              step={0.1}
+              value={displayTime}
+              disabled={!duration}
+              onChange={(e) => {
+                const value = Number(e.target.value);
+                setScrubTime(value);
+                seek(value);
+              }}
+              onPointerUp={() => setScrubTime(null)}
+              onKeyUp={() => setScrubTime(null)}
+              className="absolute inset-0 h-full w-full cursor-pointer touch-none opacity-0 disabled:cursor-default"
+            />
+          </div>
+          <div className="flex items-center justify-between text-xs tabular-nums text-white/40">
+            <span>{formatSeconds(displayTime)}</span>
+            <span>{formatSeconds(duration)}</span>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-10">
+          <button
+            type="button"
+            onClick={playPrevious}
+            aria-label="Previous track"
+            className="flex h-11 w-11 items-center justify-center text-[var(--theme-fg)]"
+          >
+            <SkipPreviousIcon size={28} />
+          </button>
+          <button
+            type="button"
+            onClick={togglePlay}
+            aria-label={isPaused ? "Play" : "Pause"}
+            className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-[var(--theme-fg)]"
+          >
+            {isPaused ? <PlayIcon size={26} /> : <PauseIcon size={26} />}
+          </button>
+          <button
+            type="button"
+            onClick={playNext}
+            aria-label="Next track"
+            className="flex h-11 w-11 items-center justify-center text-[var(--theme-fg)]"
+          >
+            <SkipNextIcon size={28} />
+          </button>
+        </div>
+      </>
+    );
+  }
+
   return (
     <>
       <AnimatePresence>
@@ -165,107 +239,54 @@ export function NowPlayingBar() {
               <p className="text-xs font-semibold uppercase tracking-wide text-white/40">Now Playing</p>
             </div>
 
-            <div className="flex flex-1 flex-col items-center justify-center gap-8 px-8">
+            <div className="flex min-h-0 flex-1 flex-col px-8">
               {currentTrack.media_type === "video" ? (
-                // The actual <video> element lives in player-context and is
-                // portaled into the inner div — ref callback claims it;
-                // React calls it with null on unmount (sheet closes, or the
-                // track changes to non-video), which releases it back to its
-                // default hidden slot where it keeps playing audio-only in
-                // the background. The fullscreen button is a sibling, not a
-                // child of the portal target, so it isn't wiped out by
-                // whatever gets portaled in.
-                // -mx-8 cancels the parent's px-8 for this element only, so
-                // it runs edge-to-edge instead of being boxed in with the
-                // title/scrubber/controls below it — a real size increase on
-                // phone-width screens, where max-w-sm was never actually the
-                // binding constraint (the padding was).
-                <div className="relative -mx-8 aspect-video overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]">
-                  <div ref={setVideoContainer} className="h-full w-full" />
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (videoRef.current) enterVideoFullscreen(videoRef.current);
-                    }}
-                    aria-label="Fullscreen"
-                    className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white"
-                  >
-                    <FullscreenIcon size={18} />
-                  </button>
-                </div>
-              ) : (
-                <TrackArt
-                  index={hashIndex(currentTrack.song + currentTrack.artist_name)}
-                  size={320}
-                  src={currentTrack.coverArt}
-                  alt={currentTrack.song}
-                  className="max-w-full rounded-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]"
-                />
-              )}
-
-              <div className="w-full max-w-sm min-w-0 text-center">
-                <p className="truncate text-2xl font-bold text-[var(--theme-fg)]">{currentTrack.song}</p>
-                <p className="truncate text-base text-white/50">{currentTrack.artist_name}</p>
-              </div>
-
-              <div className="w-full max-w-sm">
-                <div className="relative flex h-4 w-full items-center">
-                  <div className="pointer-events-none absolute inset-x-0 h-0.5 w-full bg-white/10">
-                    <div
-                      className="h-full bg-[var(--theme-accent)] transition-[width]"
-                      style={{ width: `${progress * 100}%` }}
-                    />
+                <>
+                  {/* flex-1 + min-h-0 instead of aspect-video: lets the box
+                      grow to fill whatever vertical space the title/scrubber/
+                      controls below don't need, rather than being capped at
+                      16:9-of-width. The <video> itself (in player-context)
+                      uses object-contain, so it letterboxes/pillarboxes
+                      correctly inside whatever size this box ends up —
+                      -mx-8 still cancels the parent's horizontal padding so
+                      it's edge-to-edge, same as before.
+                      The actual <video> element lives in player-context and
+                      is portaled into the inner div — ref callback claims
+                      it; React calls it with null on unmount (sheet closes,
+                      or the track changes to non-video), which releases it
+                      back to its default hidden slot where it keeps playing
+                      audio-only in the background. The fullscreen button is
+                      a sibling, not a child of the portal target, so it
+                      isn't wiped out by whatever gets portaled in. */}
+                  <div className="relative -mx-8 min-h-0 flex-1 overflow-hidden rounded-2xl bg-black shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]">
+                    <div ref={setVideoContainer} className="h-full w-full" />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (videoRef.current) enterVideoFullscreen(videoRef.current);
+                      }}
+                      aria-label="Fullscreen"
+                      className="absolute right-2 top-2 flex h-9 w-9 items-center justify-center rounded-full bg-black/50 text-white"
+                    >
+                      <FullscreenIcon size={18} />
+                    </button>
                   </div>
-                  <input
-                    type="range"
-                    aria-label="Seek"
-                    min={0}
-                    max={duration || 0}
-                    step={0.1}
-                    value={displayTime}
-                    disabled={!duration}
-                    onChange={(e) => {
-                      const value = Number(e.target.value);
-                      setScrubTime(value);
-                      seek(value);
-                    }}
-                    onPointerUp={() => setScrubTime(null)}
-                    onKeyUp={() => setScrubTime(null)}
-                    className="absolute inset-0 h-full w-full cursor-pointer touch-none opacity-0 disabled:cursor-default"
+                  <div className="flex shrink-0 flex-col items-center gap-6 pt-6">
+                    {currentTrack && trackInfoAndControls(currentTrack)}
+                  </div>
+                </>
+              ) : (
+                <div className="flex flex-1 flex-col items-center justify-center gap-8">
+                  <TrackArt
+                    index={hashIndex(currentTrack.song + currentTrack.artist_name)}
+                    size={320}
+                    src={currentTrack.coverArt}
+                    alt={currentTrack.song}
+                    className="max-w-full rounded-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]"
                   />
+                  {currentTrack && trackInfoAndControls(currentTrack)}
                 </div>
-                <div className="flex items-center justify-between text-xs tabular-nums text-white/40">
-                  <span>{formatSeconds(displayTime)}</span>
-                  <span>{formatSeconds(duration)}</span>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-10">
-                <button
-                  type="button"
-                  onClick={playPrevious}
-                  aria-label="Previous track"
-                  className="flex h-11 w-11 items-center justify-center text-[var(--theme-fg)]"
-                >
-                  <SkipPreviousIcon size={28} />
-                </button>
-                <button
-                  type="button"
-                  onClick={togglePlay}
-                  aria-label={isPaused ? "Play" : "Pause"}
-                  className="flex h-16 w-16 items-center justify-center rounded-full bg-white/10 text-[var(--theme-fg)]"
-                >
-                  {isPaused ? <PlayIcon size={26} /> : <PauseIcon size={26} />}
-                </button>
-                <button
-                  type="button"
-                  onClick={playNext}
-                  aria-label="Next track"
-                  className="flex h-11 w-11 items-center justify-center text-[var(--theme-fg)]"
-                >
-                  <SkipNextIcon size={28} />
-                </button>
-              </div>
+              )}
             </div>
           </motion.div>
         )}
