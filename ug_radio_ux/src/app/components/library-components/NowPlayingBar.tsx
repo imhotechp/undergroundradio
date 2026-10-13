@@ -58,7 +58,11 @@ export function NowPlayingBar() {
   // video's own touch handling for pointer events.
   const dragControls = useDragControls();
   function handleSheetDragEnd(_event: unknown, info: PanInfo) {
-    if (info.offset.y > 120 || info.velocity.y > 600) setExpanded(false);
+    // Low bar on purpose: either one works — drag about a sixth of the way
+    // down, or just flick in that direction at any distance. Matches native
+    // sheet dismiss gestures (iOS/Android), which don't require dragging
+    // anywhere near the full screen height either.
+    if (info.offset.y > 70 || info.velocity.y > 350) setExpanded(false);
   }
 
   // avoid the sheet reappearing on its own the next time a track starts —
@@ -234,7 +238,16 @@ export function NowPlayingBar() {
             dragControls={dragControls}
             dragListener={false}
             dragConstraints={{ top: 0, bottom: 0 }}
-            dragElastic={{ top: 0, bottom: 0.5 }}
+            // dragConstraints pins the resting position at exactly 0, so
+            // every bit of downward movement is technically "outside"
+            // those constraints — dragElastic is how much of that is
+            // actually allowed to show, where 1 = the sheet tracks the
+            // finger exactly 1:1 and lower values add rubber-band
+            // resistance (less visible movement per pixel dragged). Set
+            // near 1 on purpose — it also directly scales what onDragEnd's
+            // info.offset reports, so a low resistance value here is what
+            // makes the small physical drag below actually register.
+            dragElastic={{ top: 0, bottom: 1 }}
             onDragEnd={handleSheetDragEnd}
             className="fixed inset-0 z-[60] flex flex-col bg-[rgb(var(--theme-bg-rgb))] text-[var(--theme-fg)]"
             style={{
@@ -244,12 +257,15 @@ export function NowPlayingBar() {
           >
             {/* Drag only starts from here (the grabber + header row), not
                 the whole sheet, so it doesn't fight the seek scrubber or
-                the video's own touch handling further down. */}
+                the video's own touch handling further down. Generous
+                vertical padding (not just the thin visible bar) so the
+                actual touch target to START a drag is much bigger than
+                what's drawn — easy to catch without aiming precisely. */}
             <div
-              className="relative flex shrink-0 touch-none flex-col items-center gap-2 px-4 pb-2"
+              className="relative flex shrink-0 touch-none flex-col items-center gap-3 px-4 pt-1 pb-5"
               onPointerDown={(e) => dragControls.start(e)}
             >
-              <div className="h-1 w-10 rounded-full bg-white/20" aria-hidden />
+              <div className="h-1.5 w-12 rounded-full bg-white/25" aria-hidden />
               <div className="relative flex w-full items-center justify-center">
                 <button
                   type="button"
