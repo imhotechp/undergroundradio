@@ -16,6 +16,8 @@ interface PlayerContextValue {
   playNext: () => void;
   playPrevious: () => void;
   seek: (time: number) => void;
+  shuffle: boolean;
+  toggleShuffle: () => void;
   // Lets a video surface (the Now Playing full-screen view) claim the
   // already-playing <video> element by giving it a container to render
   // into — see the portal note below. Pass null to release it back to the
@@ -68,6 +70,12 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   const [isPaused, setIsPaused] = useState(true);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
+  // A mode, not a one-time reorder — `queue` itself always stays in its
+  // original order (see playNext below), so turning shuffle back off just
+  // resumes normal sequential order from wherever the current track
+  // actually sits in that order, with no separate bookkeeping needed.
+  const [shuffle, setShuffle] = useState(false);
+  const toggleShuffle = useCallback(() => setShuffle((s) => !s), []);
 
   const currentTrack = currentIndex !== null ? (queue[currentIndex] ?? null) : null;
 
@@ -151,8 +159,17 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, [activeElement]);
 
   const playNext = useCallback(() => {
-    setCurrentIndex((i) => (i !== null && i + 1 < queue.length ? i + 1 : i));
-  }, [queue.length]);
+    setCurrentIndex((i) => {
+      if (i === null || queue.length === 0) return i;
+      if (shuffle) {
+        if (queue.length === 1) return i; // nothing else to pick
+        let next = Math.floor(Math.random() * queue.length);
+        while (next === i) next = Math.floor(Math.random() * queue.length); // avoid an immediate repeat
+        return next;
+      }
+      return i + 1 < queue.length ? i + 1 : i;
+    });
+  }, [queue.length, shuffle]);
 
   const playPrevious = useCallback(() => {
     // standard media-player behavior: restart the current track if it's
@@ -340,7 +357,7 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
       value={{
         currentTrack, isPaused, currentTime, duration,
         playQueue, togglePlay, playNext, playPrevious, seek,
-        videoRef, setVideoContainer,
+        videoRef, setVideoContainer, shuffle, toggleShuffle,
       }}
     >
       {children}

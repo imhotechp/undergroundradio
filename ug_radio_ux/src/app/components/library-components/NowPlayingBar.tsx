@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useDragControls, type PanInfo } from "framer-motion";
 import { TrackArt } from "@/app/components/library-components/track-art";
 import {
   ChevronDownIcon,
@@ -51,6 +51,15 @@ export function NowPlayingBar() {
   const [expanded, setExpanded] = useState(false);
   const displayTime = scrubTime ?? Math.min(currentTime, duration || 0);
   const progress = duration > 0 ? Math.min(displayTime / duration, 1) : 0;
+
+  // Pull-down-to-dismiss: drag only starts from the header's grabber handle
+  // (dragListener={false} + dragControls.start on pointerdown there), not
+  // the whole sheet — otherwise this would fight the seek scrubber and the
+  // video's own touch handling for pointer events.
+  const dragControls = useDragControls();
+  function handleSheetDragEnd(_event: unknown, info: PanInfo) {
+    if (info.offset.y > 120 || info.velocity.y > 600) setExpanded(false);
+  }
 
   // avoid the sheet reappearing on its own the next time a track starts —
   // once the track that was expanded goes away (e.g. logout), drop the flag
@@ -221,22 +230,37 @@ export function NowPlayingBar() {
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", stiffness: 300, damping: 32 }}
+            drag="y"
+            dragControls={dragControls}
+            dragListener={false}
+            dragConstraints={{ top: 0, bottom: 0 }}
+            dragElastic={{ top: 0, bottom: 0.5 }}
+            onDragEnd={handleSheetDragEnd}
             className="fixed inset-0 z-[60] flex flex-col bg-[rgb(var(--theme-bg-rgb))] text-[var(--theme-fg)]"
             style={{
               paddingTop: "calc(env(safe-area-inset-top) + 1rem)",
               paddingBottom: "calc(env(safe-area-inset-bottom) + 1.5rem)",
             }}
           >
-            <div className="relative flex shrink-0 items-center justify-center px-4 pb-2">
-              <button
-                type="button"
-                onClick={() => setExpanded(false)}
-                aria-label="Collapse now playing"
-                className="absolute left-4 flex h-9 w-9 items-center justify-center text-[var(--theme-fg)]/70"
-              >
-                <ChevronDownIcon />
-              </button>
-              <p className="text-xs font-semibold uppercase tracking-wide text-white/40">Now Playing</p>
+            {/* Drag only starts from here (the grabber + header row), not
+                the whole sheet, so it doesn't fight the seek scrubber or
+                the video's own touch handling further down. */}
+            <div
+              className="relative flex shrink-0 touch-none flex-col items-center gap-2 px-4 pb-2"
+              onPointerDown={(e) => dragControls.start(e)}
+            >
+              <div className="h-1 w-10 rounded-full bg-white/20" aria-hidden />
+              <div className="relative flex w-full items-center justify-center">
+                <button
+                  type="button"
+                  onClick={() => setExpanded(false)}
+                  aria-label="Collapse now playing"
+                  className="absolute left-0 flex h-9 w-9 items-center justify-center text-[var(--theme-fg)]/70"
+                >
+                  <ChevronDownIcon />
+                </button>
+                <p className="text-xs font-semibold uppercase tracking-wide text-white/40">Now Playing</p>
+              </div>
             </div>
 
             <div className="flex min-h-0 flex-1 flex-col px-8">

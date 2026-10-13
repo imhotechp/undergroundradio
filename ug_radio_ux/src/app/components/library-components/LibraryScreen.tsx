@@ -18,7 +18,7 @@ export function LibraryScreen({
   title?: string;
   backHref?: string;
 }) {
-  const { currentTrack, isPaused, playQueue, togglePlay } = usePlayer();
+  const { currentTrack, isPaused, playQueue, togglePlay, shuffle, toggleShuffle } = usePlayer();
 
   const totalDuration = useMemo(() => formatTotalDuration(tracks), [tracks]);
 
@@ -30,18 +30,17 @@ export function LibraryScreen({
     }
   }
 
-  function handleShuffle() {
-    if (tracks.length === 0) return;
-    // Fisher-Yates: shuffles the queue itself, not just the starting
-    // track — playNext/playPrevious walk the queue in order, so a fixed
-    // track order with a random start index would still play in the
-    // same sequence after the first song.
-    const shuffled = [...tracks];
-    for (let i = shuffled.length - 1; i > 0; i--) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+  // Toggles the mode (player-context's playNext then picks randomly, or
+  // not, from here on) rather than reordering anything itself — queue stays
+  // in natural order always, which is also what lets turning shuffle back
+  // off resume sequentially from wherever the current track actually sits.
+  // If nothing's playing yet, also kicks off a random track so tapping
+  // Shuffle on an idle library actually starts something.
+  function handleShuffleToggle() {
+    toggleShuffle();
+    if (!currentTrack && tracks.length > 0) {
+      playQueue(tracks, Math.floor(Math.random() * tracks.length));
     }
-    playQueue(shuffled, 0);
   }
 
   return (
@@ -67,8 +66,12 @@ export function LibraryScreen({
           {tracks.length > 0 && (
             <button
               type="button"
-              onClick={handleShuffle}
-              className="flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-sm font-medium text-white/80 active:bg-white/20"
+              onClick={handleShuffleToggle}
+              aria-pressed={shuffle}
+              className={`flex items-center gap-1.5 rounded-full px-3 py-1.5 text-sm font-medium ${
+                shuffle ? "text-white" : "bg-white/10 text-white/80 active:bg-white/20"
+              }`}
+              style={shuffle ? { backgroundColor: "var(--theme-accent)" } : undefined}
             >
               <ShuffleIcon />
               Shuffle
