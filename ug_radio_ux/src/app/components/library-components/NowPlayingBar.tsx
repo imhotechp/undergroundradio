@@ -155,7 +155,12 @@ export function NowPlayingBar() {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: 80, opacity: 0 }}
             transition={{ type: "spring", stiffness: 320, damping: 30 }}
-            className="fixed inset-x-2 z-40 overflow-hidden rounded-xl border border-white/10 bg-white/10 backdrop-blur-xl"
+            // Same lg: centering as FloatingPanel/StatusCard — otherwise this
+            // capsule stretches the full width of a laptop-size window.
+            // max-w-md (not max-w-2xl) matches the NavBar directly below it,
+            // so the two floating pieces line up instead of one being
+            // noticeably wider than the other.
+            className="fixed inset-x-2 z-40 overflow-hidden rounded-xl border border-white/10 bg-white/10 backdrop-blur-xl lg:inset-x-auto lg:left-1/2 lg:w-full lg:max-w-md lg:-translate-x-1/2"
             style={{ bottom: "calc(6rem + env(safe-area-inset-bottom))" }}
           >
             <div
