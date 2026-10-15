@@ -30,14 +30,42 @@ SIMPLE_JWT = {
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-# SECURITY WARNING: keep the secret key used in production secret! In production,
-# set DJANGO_SECRET_KEY as a real env var (e.g. in the systemd unit) — do NOT put
-# it in the tracked .env file. This fallback is fine for local dev only.
-SECRET_KEY = getenv('DJANGO_SECRET_KEY', 'django-insecure--00vaxs5nwhlgov1x09&-z7=c6e3h@2l6oit(*unsxix5=o+4-')
-
 # SECURITY WARNING: don't run with debug turned on in production!
 # Defaults to True to preserve local dev behavior; production sets DJANGO_DEBUG=False.
 DEBUG = getenv('DJANGO_DEBUG', 'True') == 'True'
+
+# SECURITY WARNING: keep the secret key used in production secret! In production,
+# set DJANGO_SECRET_KEY as a real env var (e.g. in the systemd unit) — do NOT put
+# it in the tracked .env file. The hardcoded fallback below is fine for local dev
+# only — failing loudly instead of silently using it in production stops a
+# forgotten/misconfigured env var from quietly running prod on a secret key
+# that's sitting in plain text in this file's own git history (letting anyone
+# who's seen it forge session cookies, password-reset tokens, etc.).
+_SECRET_KEY = getenv('DJANGO_SECRET_KEY')
+if not _SECRET_KEY:
+    if not DEBUG:
+        raise RuntimeError('DJANGO_SECRET_KEY must be set when DJANGO_DEBUG=False')
+    _SECRET_KEY = 'django-insecure--00vaxs5nwhlgov1x09&-z7=c6e3h@2l6oit(*unsxix5=o+4-'
+SECRET_KEY = _SECRET_KEY
+
+# nginx (deploy/nginx/undergroundradio.conf) terminates TLS and proxies to
+# gunicorn over plain HTTP on 127.0.0.1, setting X-Forwarded-Proto to the
+# real original scheme. Without telling Django to trust that header,
+# request.is_secure() is always False behind this proxy — which would
+# silently break the secure-cookie settings below (they'd just never
+# actually mark a cookie Secure, since Django would think every request,
+# including real HTTPS ones, was plain HTTP).
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Only enforced in production — local dev still runs over plain http.
+# nginx's certbot-managed config already redirects HTTP to HTTPS on its own,
+# so SECURE_SSL_REDIRECT is defense-in-depth here, not the only thing doing
+# it. (Not setting SECURE_HSTS_SECONDS here deliberately — it's a much
+# harder setting to walk back once a browser has cached it, so turning that
+# on is worth doing as its own explicit decision, not bundled into this.)
+SECURE_SSL_REDIRECT = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
+CSRF_COOKIE_SECURE = not DEBUG
 
 # Error monitoring — no-ops when SENTRY_DSN is unset (e.g. local dev). DSNs
 # are write-only ingestion endpoints, not secrets, but there's no tracked
@@ -127,6 +155,12 @@ REST_FRAMEWORK = {
     "DEFAULT_THROTTLE_RATES": {
         "auth": "10/min",
     },
+    # Wraps DRF's own handler (which already cleanly JSONs Http404,
+    # PermissionDenied, ValidationError, etc.) — only changes what happens
+    # for an exception DRF doesn't recognize, which otherwise reaches
+    # Django's raw HTML/text error page instead of matching the rest of
+    # this API's JSON responses. See myapp/exceptions.py.
+    "EXCEPTION_HANDLER": "myapp.exceptions.custom_exception_handler",
 }
 
 

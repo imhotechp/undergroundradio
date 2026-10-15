@@ -159,7 +159,13 @@ class MeView(APIView):
         updated = {}
 
         if 'username' in request.data:
-            username = (request.data.get('username') or '').strip().lower()
+            username_raw = request.data.get('username')
+            # request.data can hold any JSON type — a list/number/object here
+            # would otherwise crash on .strip() with an unhandled 500 instead
+            # of this clean 400.
+            if not isinstance(username_raw, str):
+                return Response({'error': 'Username must be between 3 and 20 characters.'}, status=400)
+            username = username_raw.strip().lower()
             if len(username) < 3 or len(username) > 20:
                 return Response({'error': 'Username must be between 3 and 20 characters.'}, status=400)
             if not re.match(r"^\w+$", username):
@@ -205,7 +211,12 @@ class TokenRedeemView(APIView):
     @retry_on_db_connection_error
     def post(self, request):
         token = request.query_params.get('token') or request.data.get('token')
-        if not token:
+        # query_params is always string-or-None, but request.data (the body)
+        # can hold any JSON type — a non-string here saved fine on local
+        # sqlite in testing, but Postgres (production) has no adapter for
+        # binding a list/dict to a text column, so this guards against a
+        # production-only crash sqlite wouldn't have shown.
+        if not token or not isinstance(token, str):
             return Response({'error': 'token is required.'}, status=400)
         request.user.pending_song_token = token
         request.user.save(update_fields=['pending_song_token'])
@@ -257,12 +268,23 @@ class LoginView(APIView):
 
     @retry_on_db_connection_error
     def post(self, request):
+        # request.data can hold any JSON type, not just the string a login
+        # form would send — a list/number/object here would otherwise crash
+        # on .strip() with an unhandled 500 instead of a clean 401. Doesn't
+        # add any new length/format rejection (unlike the unused
+        # LoginSerializer in serializers.py, which has min_length
+        # constraints that could lock out a legitimate account with a
+        # shorter-than-8-char password predating that rule) — this only
+        # guards the type.
+        username_raw = request.data.get("username")
+        password = request.data.get("password")
+        if not isinstance(username_raw, str) or not isinstance(password, str):
+            return Response({'error': 'Invalid credentials'}, status=401)
         # Usernames are always stored lowercased (see AccountSerializer.validate
         # and MeView.patch) — Postgres text equality is case-sensitive, so without
         # this, a mismatched case (e.g. a mobile keyboard auto-capitalizing the
         # first letter) looks exactly like a wrong password from the user's side.
-        username = (request.data.get("username") or "").strip().lower()
-        password = request.data.get("password")
+        username = username_raw.strip().lower()
         token = request.query_params.get('token')
         user = authenticate(username=username, password=password)
         if not user:
@@ -289,7 +311,11 @@ class PasswordResetRequestView(APIView):
     throttle_scope = 'auth'
 
     def post(self, request):
-        username = (request.data.get('username') or '').strip().lower()
+        username_raw = request.data.get('username')
+        # Treated the same as "no username given" (below) rather than
+        # crashing on .strip() — request.data can hold any JSON type, and
+        # this endpoint's whole point is responding identically either way.
+        username = username_raw.strip().lower() if isinstance(username_raw, str) else ''
         if username:
             user = User.objects.filter(username=username).first()
             if user and user.email:
@@ -324,7 +350,19 @@ class PasswordResetConfirmView(APIView):
         uid = request.data.get('uid')
         token = request.data.get('token')
         new_password = request.data.get('new_password')
-        if not uid or not token or not new_password:
+        # All three must actually be strings, not just truthy — confirmed by
+        # testing directly: a non-string token (list/dict/number) crashes
+        # default_token_generator.check_token with an unhandled AttributeError
+        # ('list' object has no attribute 'split', etc.), and a non-string
+        # new_password would crash set_password's hasher the same way. uid's
+        # own decode failure is the one case already caught below (the
+        # except there includes TypeError), but checking it here too keeps
+        # the three checks uniform and fails fast before any of this runs.
+        if (
+            not isinstance(uid, str) or not uid
+            or not isinstance(token, str) or not token
+            or not isinstance(new_password, str) or not new_password
+        ):
             return Response({'error': 'uid, token, and new_password are required.'}, status=400)
 
         try:

@@ -15,6 +15,7 @@ import requests
 import sentry_sdk
 from django.conf import settings
 from django.core.management.base import BaseCommand
+from django.db import close_old_connections
 
 from myapp.models import VideoTranscodeJob
 
@@ -34,6 +35,16 @@ class Command(BaseCommand):
     help = "Transcodes the oldest pending VideoTranscodeJob into HLS and uploads it to R2."
 
     def handle(self, *args, **options):
+        # CONN_MAX_AGE/CONN_HEALTH_CHECKS (settings.py) only get enforced via
+        # the request-start/request-end signals Django's WSGI handler fires —
+        # a management command never fires those, so nothing was actually
+        # recycling this connection on its own. Calling this explicitly
+        # (here, and again below after the slow download+ffmpeg step) is what
+        # makes those settings actually apply here: it closes the connection
+        # if it's past CONN_MAX_AGE or fails a health check, and Django
+        # transparently reconnects on the next query either way.
+        close_old_connections()
+
         job = (
             VideoTranscodeJob.objects.select_related("song")
             .filter(status="pending")
@@ -61,6 +72,11 @@ class Command(BaseCommand):
             renditions = [r for r in RENDITIONS if r[1] <= src_height] or [RENDITIONS[-1]]
             master_url = self._transcode_and_upload(song, source_path, src_width, src_height, renditions, workdir)
 
+            # The real risk window: download + ffmpeg can run for minutes
+            # with zero DB activity, long enough for Neon's pooled connection
+            # to be dropped server-side — recycle before writing results back
+            # rather than finding out via a failed save().
+            close_old_connections()
             song.hls_url = master_url
             song.save(update_fields=["hls_url"])
             job.status = "done"
@@ -73,6 +89,10 @@ class Command(BaseCommand):
             stderr = getattr(exc, "stderr", None)
             if stderr:
                 detail += "\n" + (stderr.decode("utf-8", "replace") if isinstance(stderr, bytes) else str(stderr))
+            # Same risk applies to the failure path — a timeout or ffmpeg
+            # crash after a long run is exactly when the connection is most
+            # likely to have gone stale in the meantime.
+            close_old_connections()
             job.status = "failed"
             job.error = detail[:4000]
             job.save(update_fields=["status", "error", "updated_at"])
