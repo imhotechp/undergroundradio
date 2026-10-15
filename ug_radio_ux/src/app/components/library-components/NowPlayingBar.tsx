@@ -284,7 +284,12 @@ export function NowPlayingBar() {
               </div>
             </div>
 
-            <div className="flex min-h-0 flex-1 flex-col px-8">
+            {/* overflow-y-auto is the safety net: on a laptop browser window
+                (address bar + tab strip eating into viewport height), the
+                320px art + text + scrubber + buttons can be taller than
+                what's left after the header, which otherwise clips the
+                buttons off the bottom with no way to reach them. */}
+            <div className="flex min-h-0 flex-1 flex-col overflow-y-auto px-8">
               {currentTrack.media_type === "video" ? (
                 <>
                   {/* flex-1 + min-h-0 instead of aspect-video: the box now
@@ -327,10 +332,10 @@ export function NowPlayingBar() {
                   </div>
                 </>
               ) : (
-                <div className="flex flex-1 flex-col items-center justify-center gap-8">
+                <div className="flex flex-1 flex-col items-center justify-center gap-6 py-4">
                   <TrackArt
                     index={hashIndex(currentTrack.song + currentTrack.artist_name)}
-                    size={320}
+                    size={260}
                     src={currentTrack.coverArt}
                     alt={currentTrack.song}
                     className="max-w-full rounded-2xl shadow-[0_20px_60px_-20px_rgba(0,0,0,0.7)]"
