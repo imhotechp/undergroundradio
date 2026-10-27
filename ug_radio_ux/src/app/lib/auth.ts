@@ -1,4 +1,4 @@
-export const ACCESS_TOKEN_KEY = "undergroundradio-access-token";
+const ACCESS_TOKEN_KEY = "undergroundradio-access-token";
 const REFRESH_TOKEN_KEY = "undergroundradio-refresh-token";
 
 export function getAccessToken(): string | null {
@@ -34,4 +34,32 @@ export function clearTokens() {
   // account-specific state on logout instead of leaking it into whichever
   // account logs in next on this browser
   window.dispatchEvent(new Event("auth-changed"));
+}
+
+// Fires `cb` whenever the access token changes, in THIS tab or any other
+// open tab of the same origin — one place for every consumer (player
+// playback, theme sync, …) to react to login/logout instead of each one
+// separately learning about both signals it takes to cover every tab:
+//   - "auth-changed": a same-window custom event setTokens/clearTokens
+//     dispatch above, for the tab that actually made the change.
+//   - the native "storage" event: fires automatically in every OTHER open
+//     tab when localStorage changes, but never in the tab that made the
+//     change — without it, logging out in one tab would leave every other
+//     tab (including one already sitting on /login) unaware.
+// Returns an unsubscribe function for effect cleanup.
+export function onAuthChange(cb: () => void): () => void {
+  function onAuthChanged() {
+    cb();
+  }
+  function onStorage(e: StorageEvent) {
+    if (e.key !== null && e.key !== ACCESS_TOKEN_KEY) return;
+    if (e.newValue) return; // key still has a value — token wasn't cleared
+    cb();
+  }
+  window.addEventListener("auth-changed", onAuthChanged);
+  window.addEventListener("storage", onStorage);
+  return () => {
+    window.removeEventListener("auth-changed", onAuthChanged);
+    window.removeEventListener("storage", onStorage);
+  };
 }

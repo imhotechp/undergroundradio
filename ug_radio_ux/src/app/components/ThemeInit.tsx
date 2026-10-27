@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { applyTheme, DEFAULT_THEME, loadTheme, mergeTheme, saveTheme } from "@/app/lib/theme-preferences";
 import { getMe } from "@/app/lib/api";
-import { getAccessToken } from "@/app/lib/auth";
+import { getAccessToken, onAuthChange } from "@/app/lib/auth";
 
 /**
  * Fetches the account's saved theme and applies it. If logged out, resets to
@@ -32,11 +32,12 @@ async function syncThemeFromServer() {
 /**
  * Applies the persisted theme as CSS variables on mount, then reconciles
  * with the account's saved theme so it follows the user across devices, not
- * just the browser. Also re-syncs on "auth-changed" — this component mounts
- * once for the whole session (root layout), so without that listener a login
- * or logout that happens *after* mount (the common case, since a fresh
- * session usually starts on /login before any token exists) would never
- * trigger a sync.
+ * just the browser. Also re-syncs on any auth change (via onAuthChange,
+ * covering both this tab and every other open tab) — this component mounts
+ * once for the whole session (root layout), so without that a login or
+ * logout that happens *after* mount (the common case, since a fresh session
+ * usually starts on /login before any token exists, and a logout in one tab
+ * must still reset theme in every other open tab) would never trigger a sync.
  */
 export function ThemeInit() {
   useEffect(() => {
@@ -45,8 +46,7 @@ export function ThemeInit() {
     applyTheme(loadTheme());
     syncThemeFromServer();
 
-    window.addEventListener("auth-changed", syncThemeFromServer);
-    return () => window.removeEventListener("auth-changed", syncThemeFromServer);
+    return onAuthChange(syncThemeFromServer);
   }, []);
 
   return null;

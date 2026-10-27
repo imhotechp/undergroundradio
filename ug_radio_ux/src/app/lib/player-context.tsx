@@ -4,7 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useRef, useState } f
 import { createPortal } from "react-dom";
 import Hls from "hls.js";
 import type { Track } from "@/app/lib/api";
-import { ACCESS_TOKEN_KEY, getAccessToken } from "@/app/lib/auth";
+import { getAccessToken, onAuthChange } from "@/app/lib/auth";
 
 interface PlayerContextValue {
   currentTrack: Track | null;
@@ -283,27 +283,10 @@ export function PlayerProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   useEffect(() => {
-    function onAuthChanged() {
+    return onAuthChange(() => {
       if (getAccessToken()) return;
       stopPlaybackForLogout();
-    }
-    window.addEventListener("auth-changed", onAuthChanged);
-    return () => window.removeEventListener("auth-changed", onAuthChanged);
-  }, [stopPlaybackForLogout]);
-
-  // cross-tab logout: localStorage changes only raise a native "storage"
-  // event in OTHER tabs, never the tab that made the change — auth-changed
-  // above can't reach those, so without this, logging out in one tab left
-  // every other open tab (including one already sitting on /login) still
-  // playing.
-  useEffect(() => {
-    function onStorage(e: StorageEvent) {
-      if (e.key !== null && e.key !== ACCESS_TOKEN_KEY) return;
-      if (getAccessToken()) return;
-      stopPlaybackForLogout();
-    }
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    });
   }, [stopPlaybackForLogout]);
 
   // lock-screen / Control Center metadata (title, artist, artwork)
