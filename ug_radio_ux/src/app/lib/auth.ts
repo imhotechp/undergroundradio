@@ -1,4 +1,4 @@
-const ACCESS_TOKEN_KEY = "undergroundradio-access-token";
+export const ACCESS_TOKEN_KEY = "undergroundradio-access-token";
 const REFRESH_TOKEN_KEY = "undergroundradio-refresh-token";
 
 export function getAccessToken(): string | null {
